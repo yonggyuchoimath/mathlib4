@@ -832,6 +832,39 @@ def mapCoconeWhisker {E : K ⥤ J} {c : Cocone F} :
     mapCocone H (c.whisker E) ≅ (mapCocone H c).whisker E :=
   Cocones.ext (Iso.refl _)
 
+/-- For an isomorphism `c ≅ c'` of cones, the induced isomorphism of the `pt`s of the `mapCone`s. -/
+def mapCone_iso_pt {c c' : Cone F} (e : c ≅ c') : (H.mapCone c).pt ≅ (H.mapCone c').pt where
+  hom := (H.mapConeMorphism e.hom).hom
+  inv := (H.mapConeMorphism e.inv).hom
+  hom_inv_id := by simp [mapConeMorphism, ← map_comp]
+  inv_hom_id := by simp [mapConeMorphism, ← map_comp]
+
+/-- `mapCone_iso_pt` commutes with `π.app` of `mapCone`. -/
+lemma mapCone_iso_pt_hom {c c' : Cone F} (e : c ≅ c') (j : J) :
+    (H.mapCone c).π.app j = (H.mapCone_iso_pt e).hom ≫ (H.mapCone c').π.app j := by
+  simp [mapCone_iso_pt, mapConeMorphism, ← map_comp]
+
+/-- For an isomorphism `c ≅ c'` of cones, the induced isomorphism of the `mapCone`s. -/
+def mapCone_iso {c c' : Cone F} (e : c ≅ c') : H.mapCone c ≅ H.mapCone c' :=
+  Cones.ext (H.mapCone_iso_pt e) (H.mapCone_iso_pt_hom e)
+
+/-- For an isomorphism `c ≅ c'` of cocones, the induced isomorphism of the `pt`s of
+the `mapCocone`s. -/
+def mapCocone_iso_pt {c c' : Cocone F} (e : c ≅ c') : (H.mapCocone c).pt ≅ (H.mapCocone c').pt where
+  hom := (H.mapCoconeMorphism e.hom).hom
+  inv := (H.mapCoconeMorphism e.inv).hom
+  hom_inv_id := by simp [mapCoconeMorphism, ← map_comp]
+  inv_hom_id := by simp [mapCoconeMorphism, ← map_comp]
+
+/-- `mapCocone_iso_pt` commutes with `ι.app` of `mapCocone`. -/
+lemma mapCocone_iso_pt_hom {c c' : Cocone F} (e : c ≅ c') (j : J) :
+    (H.mapCocone c).ι.app j ≫ (H.mapCocone_iso_pt e).hom = (H.mapCocone c').ι.app j := by
+  simp [mapCocone_iso_pt, mapCoconeMorphism, ← map_comp]
+
+/-- For an isomorphism `c ≅ c'` of cocones, the induced isomorphism of the `mapCocone`s. -/
+def mapCocone_iso {c c' : Cocone F} (e : c ≅ c') : H.mapCocone c ≅ H.mapCocone c' :=
+  Cocones.ext (H.mapCocone_iso_pt e) (H.mapCocone_iso_pt_hom e)
+
 end Functor
 
 end CategoryTheory

@@ -598,6 +598,44 @@ def diagonalRestrictIsoDiagonal (i j) :
     simp only [← Category.assoc, IsIso.comp_inv_eq]
     apply pullback.hom_ext <;> simp [H]
 
+section IsAffine
+
+variable {X Y Z : Scheme.{u}} [IsAffine X] [IsAffine Y] [IsAffine Z]
+variable (f : X ⟶ Z) (g : Y ⟶ Z)
+
+instance : PreservesLimit (cospan f g) Γ.{u}.rightOp := by
+  apply @preservesLimit_of_iso_diagram _ _ _ _ _ _ _ _ Γ.rightOp (cospanCompIso
+    AffineScheme.forgetToScheme (AffineScheme.ofHom f) (AffineScheme.ofHom g)) ?_
+  refine ⟨fun {c} hc => ⟨?_⟩⟩
+  let := AffineScheme.forgetToScheme_createsLimits (AffineScheme.ofHom f) (AffineScheme.ofHom g)
+  apply IsLimit.ofIsoLimit
+    ((preservesSmallestLimits_of_preservesLimits.{u, u, 0, u + 1, u + 1, 0}
+      AffineScheme.Γ.rightOp).preservesLimitsOfShape.preservesLimit.preserves
+        (liftedLimitIsLimit hc)).some
+  exact (Functor.mapConeMapCone (liftLimit hc)).symm.trans
+    (Γ.rightOp.mapCone_iso (liftedLimitMapsToOriginal hc))
+
+lemma pullbackComparison_Γ_of_isAffine : IsIso (pullbackComparison Γ.{u}.rightOp f g) := by
+  infer_instance
+
+instance : PreservesColimit (span f.op g.op) Γ.{u} := by
+  apply @preservesColimit_of_iso_diagram _ _ _ _ _ _ _ _ Γ (spanCompIso
+    AffineScheme.forgetToScheme.op (AffineScheme.ofHom f).op (AffineScheme.ofHom g).op) ?_
+  refine ⟨fun {c} hc => ⟨?_⟩⟩
+  let := AffineScheme.forgetToScheme_op_createsColimits
+    (AffineScheme.ofHom f) (AffineScheme.ofHom g)
+  apply IsColimit.ofIsoColimit
+    ((preservesSmallestColimits_of_preservesColimits.{u, u, 0, u + 1, u + 1, 0}
+      AffineScheme.Γ).preservesColimitsOfShape.preservesColimit.preserves
+        (liftedColimitIsColimit hc)).some
+  exact (Functor.mapCoconeMapCocone (liftColimit hc)).symm.trans
+    (Γ.mapCocone_iso (liftedColimitMapsToOriginal hc))
+
+lemma pushoutComparison_Γ_of_isAffine : IsIso (pushoutComparison Γ.{u} f.op g.op) := by
+  infer_instance
+
+end IsAffine
+
 end Pullback
 
 end AlgebraicGeometry.Scheme

@@ -569,6 +569,20 @@ theorem tensorTensorTensorComm_eq :
 
 end tensorTensorTensorComm
 
+section distrib
+
+def distrib : A ⊗[R] (N ⊗[R] Q) ≃ₗ[R] (A ⊗[R] N) ⊗[A] (A ⊗[R] Q) :=
+  (assoc R R R A N Q).symm ≪≫ₗ
+    (congr ((TensorProduct.rid A (A ⊗[R] N)).restrictScalars R) (LinearEquiv.refl R Q)).symm ≪≫ₗ
+      (assoc R A A (A ⊗[R] N) A Q).restrictScalars R
+
+@[simp]
+lemma distrib_tmap (a : A) (n : N) (q : Q) :
+    (distrib R A N Q) (a ⊗ₜ[R] (n ⊗ₜ[R] q)) = (a ⊗ₜ[R] n) ⊗ₜ[A] (1 ⊗ₜ[R] q) := by
+  simp [distrib]
+
+end distrib
+
 end CommSemiring
 
 end AlgebraTensorModule

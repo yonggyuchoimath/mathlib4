@@ -211,6 +211,15 @@ noncomputable instance forgetToScheme_preservesLimits : PreservesLimits forgetTo
   change PreservesLimits (equivCommRingCat.functor ⋙ Scheme.Spec)
   infer_instance
 
+noncomputable def forgetToScheme_createsLimits {X Y Z : AffineScheme.{u}}
+    (f : X ⟶ Z) (g : Y ⟶ Z) : CreatesLimit (cospan f g) AffineScheme.forgetToScheme :=
+  createsLimitOfReflectsIsomorphismsOfPreserves
+
+noncomputable def forgetToScheme_op_createsColimits {X Y Z : AffineScheme.{u}}
+    (f : X ⟶ Z) (g : Y ⟶ Z) : CreatesColimit (span f.op g.op) AffineScheme.forgetToScheme.op :=
+  let : PreservesColimits AffineScheme.forgetToScheme.op := preservesColimits_op _
+  createsColimitOfReflectsIsomorphismsOfPreserves
+
 end AffineScheme
 
 /-- An open subset of a scheme is affine if the open subscheme is affine. -/
@@ -239,6 +248,14 @@ theorem exists_isAffineOpen_mem_and_subset {X : Scheme.{u}} {x : X}
   obtain ⟨R, f, hf⟩ := AlgebraicGeometry.Scheme.exists_affine_mem_range_and_range_subset hxU
   exact ⟨Scheme.Hom.opensRange f (H := hf.1),
     ⟨AlgebraicGeometry.isAffineOpen_opensRange f (H := hf.1), hf.2.1, hf.2.2⟩⟩
+
+instance Scheme.isAffine_local_affine {X : Scheme.{u}} {x : X} :
+    IsAffine (Scheme.Opens.toScheme (X.local_affine x).choose.obj) := by
+  let f : Scheme.Opens.toScheme (X.local_affine x).choose.obj ≅
+      AlgebraicGeometry.Spec (X.local_affine x).choose_spec.choose :=
+    Scheme.fullyFaithfulForgetToLocallyRingedSpace.preimageIso
+      (X.local_affine x).choose_spec.choose_spec.some
+  exact IsAffine.of_isIso f.hom
 
 instance Scheme.isAffine_affineCover (X : Scheme) (i : X.affineCover.J) :
     IsAffine (X.affineCover.obj i) :=
