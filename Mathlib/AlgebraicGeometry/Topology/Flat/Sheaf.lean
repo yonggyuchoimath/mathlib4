@@ -164,8 +164,8 @@ where
 2. `V` is any affine open subscheme of `U` containing `g_pre p : U`,
 3. `W` denotes the basic open subscheme for some `r : Γ(Spec R, ⊤) (≅ R)` with `g_pre '' W ⊆ V`,
 4. `ιᵣ : W ⟶ Spec R` denotes the open immersion for `W`,
-5. `P` denotes the pullback of `(Spec.map f) : Spec S ⟶ Spec R` and `ιᵣ : W ⟶ Spec R`,
-6. `ιₛ : P ⟶ Spec S` and `f' : P ⟶ W` denote the corresponding `pullback.fst` and `pullback.snd`,
+5. `P` denotes the pullback of `ιᵣ : W ⟶ Spec R` and `(Spec.map f) : Spec S ⟶ Spec R`,
+6. `f' : P ⟶ W` and `ιₛ : P ⟶ Spec S` denote the corresponding `pullback.fst` and `pullback.snd`,
   respectively, so that the top square is a pullback,
 7. `e' : P ⟶ V` denotes the restriction of the morphism `ιₛ ≫ e : P ⟶ U` of schemes,
 8. `g' : W ⟶ V` denotes the unique morphism of schemes such that `f' ≫ g' = e'` and
@@ -183,9 +183,9 @@ private noncomputable def r := Exists.choose (basicOpen_continuous_of_isAffine g
 
 private noncomputable def ιᵣ := Scheme.Opens.ι (Scheme.basicOpen (Spec R) (r h p))
 
-private noncomputable def ιₛ := pullback.fst (Spec.map f) (ιᵣ h p)
+private noncomputable def ιₛ := pullback.snd (ιᵣ h p) (Spec.map f)
 
-private noncomputable def f' := pullback.snd (Spec.map f) (ιᵣ h p)
+private noncomputable def f' := pullback.fst (ιᵣ h p) (Spec.map f)
 
 private instance : Surjective (f' h p) := by
   rw [f']
@@ -195,32 +195,24 @@ private instance (p : Spec R) : IsOpenImmersion (ιᵤ h p) := by
   rw [ιᵤ]
   infer_instance
 
-private lemma lifting_e' : Set.range ⇑(ιₛ h p ≫ e).base.hom ⊆ Set.range ⇑((ιᵤ h p)).base.hom := by
-  simp only [comp_base]
-  nth_rw 1 [(continuous_of_flat h).choose_spec.symm]
-  rw [← Category.assoc, ← comp_base, ιₛ, pullback.condition, comp_base, ← f', Category.assoc]
+private lemma lifting_e' : Set.range ⇑(ιₛ h p ≫ e).base.hom ⊆ Set.range ⇑(ιᵤ h p).base.hom := by
+  nth_rw 1 [comp_base (ιₛ h p) e, (continuous_of_flat h).choose_spec.symm, ← Category.assoc,
+    ← comp_base, ιₛ, ← pullback.condition, comp_base, ← f', Category.assoc]
   simp only [TopCat.hom_comp, TopCat.hom_comp, ContinuousMap.coe_comp, ContinuousMap.coe_comp,
     Surjective.surj.range_comp, Set.range_comp]
-  --- start : need to polish
-  have : Set.range ⇑(ιᵣ h p).base.hom = ((Spec R).basicOpen (r h p)).ι.opensRange.carrier := rfl
-  rw [this]
-  rw [congr_arg TopologicalSpace.Opens.carrier (Opens.opensRange_ι ((Spec R).basicOpen (r h p)))]
-  have : Set.range ⇑(ιᵤ h p).base =
-    (Opens.ι  (U.local_affine (g_pre p)).choose.obj).opensRange.carrier := rfl
-  rw [this]
-  rw [congr_arg TopologicalSpace.Opens.carrier
-    (Opens.opensRange_ι (U.local_affine (g_pre p)).choose.obj)]
-  --- end : need to polish
+  change ⇑(continuous_of_flat h).choose.hom '' ((Spec R).basicOpen (r h p)).ι.opensRange.carrier ⊆
+    (Opens.ι (U.local_affine (g_pre p)).choose.obj).opensRange.carrier
+  simp only [Opens.opensRange_ι]
   exact Set.image_subset_iff.mpr (basicOpen_continuous_of_isAffine g_pre p).choose_spec.right
 
 private noncomputable def e' (p : Spec R) :
-    pullback (Spec.map f) (ιᵣ h p) ⟶ Opens.toScheme (U.local_affine (g_pre p)).choose.obj :=
+    pullback (ιᵣ h p) (Spec.map f) ⟶ Opens.toScheme (U.local_affine (g_pre p)).choose.obj :=
   IsOpenImmersion.lift (ιᵤ h p) ((ιₛ h p) ≫ e) (lifting_e' h p)
 
 private lemma snd_ιₛ_map_eq_fst_ιₛ_map : (pullback.snd (f' h p) (f' h p) ≫ (ιₛ h p)) ≫ Spec.map f =
     (pullback.fst (f' h p) (f' h p) ≫ (ιₛ h p)) ≫ (Spec.map f) := by
-  simp only [Category.assoc, f', ιₛ, pullback.condition]
-  simp only [← Category.assoc, pullback.condition]
+  simp only [Category.assoc, f', ιₛ, ← pullback.condition]
+  simp only [← Category.assoc, ← pullback.condition]
 
 private lemma pushoutComparison_inl_eq_inr :
     Γ.map (e' h p).op ≫ pushout.inl (Γ.map (f' h p).op) (Γ.map (f' h p).op) ≫
@@ -242,9 +234,9 @@ private lemma pushoutComparison_inl_eq_inr :
 private instance appTopfaithfullyFlat : RingHom.FaithfullyFlat (Γ.map (f' h p).op).hom := by
   rw [Γ_map_op]
   apply (flat_and_surjective_SpecMap_iff _).mp
-  have : (asIso (pullback (Spec.map f) (ιᵣ h p)).toSpecΓ).inv ≫ f' h p ≫
+  have : (asIso (pullback (ιᵣ h p) (Spec.map f)).toSpecΓ).inv ≫ f' h p ≫
     ((Spec R).basicOpen (r h p)).toScheme.toSpecΓ = Spec.map (Hom.appTop (f' h p)) := by
-    apply (Iso.inv_comp_eq (asIso (pullback (Spec.map f) (ιᵣ h p)).toSpecΓ)).mpr
+    apply (Iso.inv_comp_eq (asIso (pullback (ιᵣ h p) (Spec.map f)).toSpecΓ)).mpr
     simp only [Scheme.toSpecΓ_naturality (f' h p), asIso_hom]
   rw [← this, f']
   exact ⟨inferInstance, inferInstance⟩
@@ -266,17 +258,14 @@ private lemma g'_comp : f' h p ≫ g' h p = e' h p := by
   apply ext_of_isAffine
   have : (e' h p).appTop = Γg' h p ≫ (f' h p).appTop :=
     (Fork.IsLimit.lift_ι' (CommRingCat.Equalizer.isLimit_fork_pushout_of_faithfullyFlat
-      (Γ.map ((f' h p)).op) (appTopfaithfullyFlat h p)) (Γ.map ((e' h p)).op) _).symm
+      (Γ.map (f' h p).op) (appTopfaithfullyFlat h p)) (Γ.map (e' h p).op) _).symm
   rw [comp_appTop, this]
   apply congr_arg (· ≫ _)
   simp only [g', comp_appTop, ← IsIso.Iso.inv_hom, inv_appTop, Category.assoc]
   apply (Iso.inv_comp_eq (asIso _)).mpr
   simp only [asIso_hom, Scheme.isoSpec_hom, toSpecΓ_appTop, ΓSpecIso_naturality]
 
-private lemma fst_e_eq_f'_g'_ιᵤ :
-    pullback.fst (Spec.map f)
-      (Scheme.Opens.ι ((Spec R).basicOpen (basicOpen_continuous_of_isAffine g_pre p).choose)) ≫ e =
-    f' h p ≫ g' h p ≫ ιᵤ h p := by
+private lemma snd_e_eq_f'_g'_ιᵤ : ιₛ h p ≫ e = f' h p ≫ g' h p ≫ ιᵤ h p := by
   rw [← Category.assoc, g'_comp]
   exact (IsOpenImmersion.lift_fac (ιᵤ h p) (ιₛ h p ≫ e) (lifting_e' h p)).symm
 
@@ -285,67 +274,49 @@ private lemma fst_e_eq_f'_g'_ιᵤ :
 /- !!! WRITE !!! -/
 variable (q : Spec R)
 
-private instance : Mono (pullback.fst (ιᵣ h p) (ιᵣ h q)) := by
-  simp only [ιᵣ]
-  infer_instance
-
-private def isPullbackOuterSquare : IsPullback
-    (pullback.fst (pullback.snd (f' h p) (pullback.fst (ιᵣ h p) (ιᵣ h q)) ≫
-      pullback.snd (ιᵣ h p) (ιᵣ h q)) (f' h q) ≫
-      pullback.fst (f' h p) (pullback.fst (ιᵣ h p) (ιᵣ h q)))
-    (pullback.snd (pullback.snd (f' h p) (pullback.fst (ιᵣ h p) (ιᵣ h q)) ≫
-      pullback.snd (ιᵣ h p) (ιᵣ h q)) (f' h q))
-    (f' h p ≫ ιᵣ h p) (f' h q ≫ ιᵣ h q) :=
-  IsPullback.paste_horiz
-    (IsPullback.of_hasPullback (pullback.snd (f' h p) (pullback.fst (ιᵣ h p) (ιᵣ h q)) ≫
-        pullback.snd (ιᵣ h p) (ιᵣ h q)) (f' h q))
-    (IsPullback.paste_vert (IsPullback.of_hasPullback (f' h p) (pullback.fst (ιᵣ h p) (ιᵣ h q)))
-      (IsPullback.of_hasPullback (ιᵣ h p) (ιᵣ h q)))
-
-/- Can I avoid this lemma? -/
-private lemma pullback_lift_inv : pullback.lift (f := (ιᵣ h p)) (g := (ιᵣ h q))
+/- Can I avoid this lemma? For that, I'd need a sort of compatibility, e.g., of
+(isPullbackOuterSquare h p q).isoPullback.inv ≫ pullback.fst _ _ ≫ pullback.snd _ _
+and
+(SOME_OTHER_SQUARE).isoPullback.inv ≫ pullback.snd _ _ ≫ pullback.fst _ _
+This particular one seems to require another IsPullback.paste_horiz, so maybe keep it for now. -/
+private lemma pullback_lift_inv : pullback.lift
       (pullback.fst (f' h p ≫ ιᵣ h p) (f' h q ≫ ιᵣ h q) ≫ f' h p)
       (pullback.snd (f' h p ≫ ιᵣ h p) (f' h q ≫ ιᵣ h q) ≫ f' h q)
       (by simp [pullback.condition]) =
-    (isPullbackOuterSquare h p q).isoPullback.inv ≫
-      pullback.fst
-        (pullback.snd (f' h p) (pullback.fst (ιᵣ h p) (ιᵣ h q)) ≫ pullback.snd (ιᵣ h p) (ιᵣ h q))
-        (f' h q) ≫
-      pullback.snd (f' h p) (pullback.fst (ιᵣ h p) (ιᵣ h q)) := by
-  apply (cancel_mono (pullback.fst (ιᵣ h p) (ιᵣ h q))).mp
-  simp only [pullback.lift_fst, Category.assoc, ← pullback.condition]
-  nth_rw 1 [← Category.assoc]
-  rw [Category.assoc (isPullbackOuterSquare h p q).isoPullback.inv _ _]
-  nth_rw 2 [← Category.assoc]
-  nth_rw 1 [← Category.assoc]
-  rw [IsPullback.isoPullback_inv_fst (isPullbackOuterSquare h p q)]
+    (IsPullback.paste_horiz (IsPullback.of_hasPullback _ _) (IsPullback.paste_vert
+      (IsPullback.of_hasPullback _ _) (IsPullback.of_hasPullback _ _))).isoPullback.inv ≫
+    pullback.fst (pullback.snd _ _ ≫ pullback.snd _ _) _ ≫ pullback.snd _ _ := by
+  refine (@cancel_mono _ _ _ _ _ (pullback.fst (ιᵣ h p) (ιᵣ h q)) ?_).mp ?_
+  · simp only [ιᵣ]
+    infer_instance
+  · simp only [pullback.lift_fst, Category.assoc, ← pullback.condition]
+    nth_rw 1 [← Category.assoc]
+    rw [Category.assoc]
+    nth_rw 2 [← Category.assoc]
+    nth_rw 1 [← Category.assoc]
+    rw [IsPullback.isoPullback_inv_fst _]
 
-private instance : Epi <| pullback.lift (f := (ιᵣ h p)) (g := (ιᵣ h q))
+private lemma g'_pullback_condition : pullback.fst (ιᵣ h p) (ιᵣ h q) ≫ g' h p ≫ ιᵤ h p =
+    pullback.snd (ιᵣ h p) (ιᵣ h q) ≫ g' h q ≫ ιᵤ h q := by
+  apply (@cancel_epi _ _ _ _ _ (pullback.lift (f := ιᵣ h p) (g := ιᵣ h q)
     (pullback.fst (f' h p ≫ ιᵣ h p) (f' h q ≫ ιᵣ h q) ≫ f' h p)
     (pullback.snd (f' h p ≫ ιᵣ h p) (f' h q ≫ ιᵣ h q) ≫ f' h q)
-    (by simp [pullback.condition]) := by
-  rw [pullback_lift_inv h p q]
-  simp only [f', ιᵣ]
-  exact epi_of_flat_surjective _
-
-private lemma g'_pullback_condition : pullback.fst (ιᵣ h p) (ιᵣ h q) ≫ g' h p ≫ (ιᵤ h p) =
-    pullback.snd (ιᵣ h p) (ιᵣ h q) ≫ g' h q ≫ (ιᵤ h q) := by
-  apply (cancel_epi (pullback.lift (f := (ιᵣ h p)) (g := (ιᵣ h q))
-    (pullback.fst (f' h p ≫ ιᵣ h p) (f' h q ≫ ιᵣ h q) ≫ f' h p)
-    (pullback.snd (f' h p ≫ ιᵣ h p) (f' h q ≫ ιᵣ h q) ≫ f' h q) _)).mp
-  simp only [← Category.assoc, pullback.lift_fst, pullback.lift_snd]
-  simp only [Category.assoc]
-  rw [← Category.assoc (f' h p) (g' h p) (ιᵤ h p), ← Category.assoc (f' h q) (g' h q) (ιᵤ h q)]
-  simp only [g'_comp, e', IsOpenImmersion.lift_fac, ← Category.assoc]
-  rw [← pullback.lift_fst (f := (Spec.map f)) (g := (Spec.map f))
-    (pullback.fst (f' h p ≫ ιᵣ h p) (f' h q ≫ ιᵣ h q) ≫ (ιₛ h p))
-    (pullback.snd (f' h p ≫ ιᵣ h p) (f' h q ≫ ιᵣ h q) ≫ (ιₛ h q))
-    (by simp [ιₛ, f', pullback.condition])]
-  nth_rw 2 [← pullback.lift_snd (f := (Spec.map f)) (g := (Spec.map f))
-    (pullback.fst (f' h p ≫ ιᵣ h p) (f' h q ≫ ιᵣ h q) ≫ (ιₛ h p))
-    (pullback.snd (f' h p ≫ ιᵣ h p) (f' h q ≫ ιᵣ h q) ≫ (ιₛ h q))
-    (by simp [ιₛ, f', pullback.condition])]
-  exact congr_arg (_ ≫ ·) h
+    (by simp [pullback.condition])) ?_).mp ?_
+  · rw [pullback_lift_inv h p q]
+    simp only [f', ιᵣ, epi_of_flat_surjective]
+  · simp only [← Category.assoc, pullback.lift_fst, pullback.lift_snd]
+    simp only [Category.assoc]
+    rw [← Category.assoc (f' h p) (g' h p) (ιᵤ h p), ← Category.assoc (f' h q) (g' h q) (ιᵤ h q)]
+    simp only [g'_comp, e', IsOpenImmersion.lift_fac, ← Category.assoc]
+    rw [← pullback.lift_fst (f := (Spec.map f)) (g := (Spec.map f))
+      (pullback.fst (f' h p ≫ ιᵣ h p) (f' h q ≫ ιᵣ h q) ≫ ιₛ h p)
+      (pullback.snd (f' h p ≫ ιᵣ h p) (f' h q ≫ ιᵣ h q) ≫ ιₛ h q)
+      (by simp [ιₛ, f', ← pullback.condition])]
+    nth_rw 2 [← pullback.lift_snd (f := (Spec.map f)) (g := (Spec.map f))
+      (pullback.fst (f' h p ≫ ιᵣ h p) (f' h q ≫ ιᵣ h q) ≫ ιₛ h p)
+      (pullback.snd (f' h p ≫ ιᵣ h p) (f' h q ≫ ιᵣ h q) ≫ ιₛ h q)
+      (by simp [ιₛ, f', ← pullback.condition])]
+    exact congr_arg (_ ≫ ·) h
 
 end
 
@@ -370,50 +341,36 @@ private noncomputable def coverR : (Spec R).OpenCover where
     exact (basicOpen_continuous_of_isAffine _ _).choose_spec.left
   map_prop := by infer_instance
 
-private instance (p : Spec R) : Epi (pullback.snd (Spec.map f) ((coverR h).map p)) :=
-  epi_of_flat_surjective _
-
 private noncomputable def g : Spec R ⟶ U :=
   (coverR h).glueMorphisms
     (fun p => g' h p ≫ Opens.ι (U.local_affine ((continuous_of_flat h).choose p)).choose.obj)
     (fun x y => g'_pullback_condition h x y)
 
-private lemma coverS_covers (q : Spec S) : q ∈ Set.range
-    ⇑(pullback.fst (Spec.map f) ((Spec R).basicOpen (basicOpen_continuous_of_isAffine
-      (continuous_of_flat h).choose ((Spec.map f).base.hom q)).choose).ι).base.hom :=
-  ⟨_, (Pullback.exists_preimage_pullback _ _
-    ((coverR h).covers ((Spec.map f).base q)).choose_spec.symm).choose_spec.left⟩
-
-private noncomputable def coverS : (Spec S).OpenCover where
-  J := (Spec R).carrier
-  obj p := pullback (Spec.map f) ((coverR h).map p)
-  map p := pullback.fst (Spec.map f) ((coverR h).map p)
-  f p := (Spec.map f).base p
-  covers := coverS_covers h
-  map_prop := inferInstance
-
 private lemma g_comp : Spec.map f ≫ g h = e := by
-  apply Cover.hom_ext (coverS h)
+  apply Cover.hom_ext (Cover.pullbackCover' (coverR h) (Spec.map f))
   intro p
-  simp only [coverS, coverR]
-  rw [fst_e_eq_f'_g'_ιᵤ h, ← Category.assoc, pullback.condition, Category.assoc]
+  simp only [Cover.pullbackCover', coverR]
+  change _ = ιₛ h p ≫ e
+  rw [snd_e_eq_f'_g'_ιᵤ h p, ← Category.assoc, ← pullback.condition, Category.assoc]
   exact congr_arg (_ ≫ ·) (Cover.ι_glueMorphisms (coverR h) (fun p => _) (fun x y => _) p)
 
 private lemma g_unique (t : Spec R ⟶ U) (ht : Spec.map f ≫ t = e) : t = g h := by
   apply Cover.hom_ext (coverR h)
   intro p
+  have : Epi (pullback.snd (Spec.map f) ((coverR h).map p)) :=
+    epi_of_flat_surjective _
   apply (cancel_epi (pullback.snd (Spec.map f) ((coverR h).map p))).mp
   rw [← Category.assoc, ← Category.assoc, ← pullback.condition, Category.assoc, Category.assoc,
-  ht, g_comp h]
+    ht, g_comp h]
 
 end LiftToSchemeMap
 
 noncomputable def isColimit_cofork_pullback_condition {R S : CommRingCat.{u}}
     (f : R ⟶ S) (hf : f.hom.Flat) (hs : Surjective (Spec.map f)) :
     IsColimit (Cofork.ofπ (Spec.map f) pullback.condition) := by
-  have : Flat (Spec.map f) := HasRingHomProperty.Spec_iff.mpr hf
   apply Cofork.IsColimit.mk' _
   intro s
+  have : Flat (Spec.map f) := HasRingHomProperty.Spec_iff.mpr hf
   use g s.condition
   constructor
   · simp only [Cofork.π_ofπ, g_comp s.condition]
@@ -428,8 +385,12 @@ noncomputable def regularEpi_of_flat {R S : CommRingCat.{u}} (f : R ⟶ S) (hf :
   w := pullback.condition
   isColimit := isColimit_cofork_pullback_condition f hf hs
 
+noncomputable def effectiveEpiStruct_of_flat {R S : CommRingCat.{u}} (f : R ⟶ S) (hf : f.hom.Flat)
+    (hs : Surjective (Spec.map f)) : EffectiveEpiStruct (Spec.map f) :=
+  @effectiveEpiStructOfRegularEpi _ _ _ _ _ (regularEpi_of_flat f hf hs)
+
 lemma effectiveEpi_of_flat {R S : CommRingCat.{u}} (f : R ⟶ S) (hf : f.hom.Flat)
     (hs : Surjective (Spec.map f)) : EffectiveEpi (Spec.map f) :=
-  ⟨⟨@effectiveEpiStructOfRegularEpi _ _ _ _ _ (regularEpi_of_flat f hf hs)⟩⟩
+  ⟨⟨effectiveEpiStruct_of_flat f hf hs⟩⟩
 
 end AlgebraicGeometry
