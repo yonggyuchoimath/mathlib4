@@ -45,6 +45,57 @@ open Scheme
 
 namespace Flat
 
+
+lemma flat_and_surjective_iff_of_faithfullyFlat_of_isAffine
+    {X Y : Scheme.{u}} [IsAffine X] [IsAffine Y] (f : X ⟶ Y) :
+    Flat f ∧ Surjective f ↔ f.appTop.hom.FaithfullyFlat := by
+  sorry
+
+noncomputable def _root_.CommRingCat.Opposite.isColimitOfπPullbackOfFaithfullyFlat
+    {R S : CommRingCat.{u}ᵒᵖ} (f : S ⟶ R) (hf : f.unop.hom.FaithfullyFlat) :
+    IsColimit (Cofork.ofπ f pullback.condition) := by
+  sorry
+
+section AffineScheme
+
+variable {X Y : AffineScheme.{u}} (f : X ⟶ Y) [Flat f] [Surjective f]
+
+noncomputable def AffineScheme.regularEpiOfFlatOfSurjective : RegularEpi f where
+  W := pullback f f
+  left := pullback.fst f f
+  right := pullback.snd f f
+  w := pullback.condition
+  isColimit := by
+    let := CommRingCat.Opposite.isColimitOfπPullbackOfFaithfullyFlat f.appTop.op <|
+      (flat_and_surjective_iff_of_faithfullyFlat_of_isAffine f).mp ⟨inferInstance, inferInstance⟩
+    #check AffineScheme.equivCommRingCat
+    #check ((preservesSmallestColimits_of_preservesColimits AffineScheme.equivCommRingCat.inverse).1.1.1 this).some
+
+
+-- noncomputable def CommRingCat.Opposite.isColimitOfπPullbackOfFaithfullyFlat (hf : f.unop.hom.FaithfullyFlat) :
+--     IsColimit (Cofork.ofπ f pullback.condition) :=
+--   Cofork.isColimitCoforkPushoutEquivIsColimitForkUnopPullback.symm
+--     (Equalizer.isLimitForkPushoutSelfOfFaithfullyFlat _ hf)
+
+-- /-- A regular epimorphism structure on a map `f : S ⟶ R` in `CommRingCatᵒᵖ` with
+-- faithfully flat `f.unop : R.unop ⟶ S.unop`. -/
+-- noncomputable def CommRingCat.Opposite.regularEpiOfFaithfullyFlat (hf : f.unop.hom.FaithfullyFlat) : RegularEpi f where
+--   W := pullback f f
+--   left := pullback.fst f f
+--   right := pullback.snd f f
+--   w := pullback.condition
+--   isColimit := isColimitOfπPullbackOfFaithfullyFlat f hf
+
+-- /-- Any map `f : S ⟶ R` in `CommRingCatᵒᵖ` with faithfully flat `f.unop : R.unop ⟶ S.unop` is
+-- an effective epimorphism. -/
+-- lemma effectiveEpi_of_faithfullyFlat (hf : f.unop.hom.FaithfullyFlat) : EffectiveEpi f := by
+--   let := regularEpiOfFaithfullyFlat f hf
+--   infer_instance
+
+
+
+end AffineScheme
+
 section SpecMorphismLifting
 
 /-
@@ -88,8 +139,8 @@ define a unique morphism `descSpec : Spec R ⟶ U` of schemes such that `Spec.ma
 (so `descSpec.base = desc`).
 -/
 
-/-- A preparation lemma for `AlgebraicGeometry.Flat.base_factor`. -/
-lemma base_factorization_type {X Y : Scheme.{u}} {f : X ⟶ Y} [Surjective f]
+/-- A preparation lemma for `base_factorization`. -/
+private lemma base_factorization_type {X Y : Scheme.{u}} {f : X ⟶ Y} [Surjective f]
     {W : Scheme.{u}} {e : X ⟶ W} (h : pullback.fst f f ≫ e = pullback.snd f f ≫ e) :
     ∃ (g : ↥Y → ↥W), ⇑e.base.hom = g ∘ ⇑f.base.hom := by
   let : RegularEpi (Scheme.forget.map f) := by
@@ -105,8 +156,9 @@ lemma base_factorization_type {X Y : Scheme.{u}} {f : X ⟶ Y} [Surjective f]
 /-- For a flat surjective and quasi-compact morphism `f : X ⟶ Y` of schemes,
 any morphism `e : X ⟶ W` of schemes satisfying `pullback.fst f f ≫ e = pullback.snd f f ≫ e`
 factors through a unique *continuous map* on underlying topological spaces. -/
-lemma base_factorization {X Y : Scheme.{u}} {f : X ⟶ Y} [Flat f] [Surjective f] [QuasiCompact f]
-    {W : Scheme.{u}} {e : X ⟶ W} (h : pullback.fst f f ≫ e = pullback.snd f f ≫ e) :
+private lemma base_factorization {X Y : Scheme.{u}} {f : X ⟶ Y} [Flat f] [Surjective f]
+    [QuasiCompact f] {W : Scheme.{u}} {e : X ⟶ W}
+    (h : pullback.fst f f ≫ e = pullback.snd f f ≫ e) :
     ∃! (g : Y.carrier ⟶ W.carrier), f.base ≫ g = e.base := by
   have {Z : TopCat} (g₁ g₂ : Z ⟶ X.carrier) (hg : g₁ ≫ f.base = g₂ ≫ f.base) :
       g₁ ≫ e.base = g₂ ≫ e.base := by
@@ -281,7 +333,7 @@ private lemma desc'_cocycle_condition (hp : desc p ∈ V) [hV : IsAffine V]
     congr 1
 
 /-- An open cover of `Spec R` by basic open subsets that maps to affine open subsets in `U` under
-`(Flat.base_factorization h).choose : (Spec R).carrier ⟶ U.carrier`. -/
+`(base_factorization h).choose : (Spec R).carrier ⟶ U.carrier`. -/
 private noncomputable def coverR : (Spec R).OpenCover := by
   apply Scheme.openCoverOfIsOpenCover (Spec R) <| fun p ↦ ((Spec R).basicOpen
     (exists_basicOpen_preimage_opens (U.local_affine (desc p)).choose.property).choose)
@@ -292,7 +344,7 @@ private noncomputable def coverR : (Spec R).OpenCover := by
     (exists_basicOpen_preimage_opens (U.local_affine (desc p)).choose.property).choose_spec.left⟩
 
 /-- An open cover of `Spec R` by basic open subsets that maps to affine open subsets in `U` under
-`(Flat.base_factorization h).choose : (Spec R).carrier ⟶ U.carrier`. -/
+`(base_factorization h).choose : (Spec R).carrier ⟶ U.carrier`. -/
 private noncomputable def coverR' : (Spec R).OpenCover := by
   apply Scheme.openCoverOfIsOpenCover (Spec R) <| fun p ↦ ((Spec R).basicOpen
     (r h (exists_isAffineOpen_mem_and_subset
@@ -318,8 +370,8 @@ noncomputable def descSpec : Spec R ⟶ U :=
     (fun x ↦ desc' h (U.local_affine (desc x)).choose.property ≫
       ιᵤ (U.local_affine (desc x)).choose.obj)
     (fun x y ↦ desc'_cocycle_condition h
-      (U.local_affine ((Flat.base_factorization h).choose x)).choose.property
-      (U.local_affine ((Flat.base_factorization h).choose y)).choose.property)
+      (U.local_affine ((base_factorization h).choose x)).choose.property
+      (U.local_affine ((base_factorization h).choose y)).choose.property)
 
 /-- The fpqc descent morphism `Spec R ⟶ U` of schemes obtained from a morphism `e : Spec S ⟶ U` of
 schemes which coequalizes the two projections of the self-pullback of `Spec S ⟶ Spec R`. -/
@@ -404,7 +456,7 @@ lemma descSpec_unique' (t : Spec R ⟶ U) (ht : Spec.map f ≫ t = e) : t = desc
 
 end DescSpec
 
-section EffectiveEpi
+section Spec
 
 variable {R S : CommRingCat.{u}} (f : R ⟶ S)
 variable (hf : f.hom.Flat) (hs : Surjective (Spec.map f))
@@ -443,7 +495,7 @@ lemma effectiveEpi_of_flat_of_surjective (hf : f.hom.Flat) (hs : Surjective (Spe
     EffectiveEpi (Spec.map f) :=
   ⟨⟨effectiveEpiStructOfFlatOfSurjective f hf hs⟩⟩
 
-end EffectiveEpi
+end Spec
 
 end Flat
 
