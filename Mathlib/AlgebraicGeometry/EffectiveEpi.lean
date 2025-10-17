@@ -66,23 +66,29 @@ noncomputable def AffineScheme.regularEpiOfFlatOfSurjective : RegularEpi f where
   right := pullback.snd f f
   w := pullback.condition
   isColimit := by
-    #check AffineScheme.equivCommRingCat
-    #check IsColimit.ofCoconeEquiv
     apply isColimitOfReflects AffineScheme.equivCommRingCat.functor
     have : parallelPair (AffineScheme.equivCommRingCat.functor.map (pullback.fst f f)) (AffineScheme.equivCommRingCat.functor.map (pullback.snd f f)) ≅ parallelPair (pullback.fst f f) (pullback.snd f f) ⋙ AffineScheme.equivCommRingCat.functor :=
       parallelPair.ext (.refl _) (.refl _) (by cat_disch) (by cat_disch)
-
     apply IsColimit.precomposeHomEquiv this _ ?_
-    simp [Cocones.precompose]
-
-
-    let : AffineScheme.equivCommRingCat.functor.mapCocone (Cofork.ofπ f pullback.condition) ≅ Cofork.ofπ (AffineScheme.equivCommRingCat.functor.map f) pullback.condition := by
+    refine Cofork.IsColimit.mk _ ?_ ?_ ?_
+    · intro s
+      dsimp
       sorry
-    simp only [Functor.mapCocone]
-    let := CommRingCat.Opposite.isColimitOfπPullbackOfFaithfullyFlat f.appTop.op <|
-      (flat_and_surjective_iff_of_faithfullyFlat_of_isAffine f).mp ⟨inferInstance, inferInstance⟩
-    #check AffineScheme.equivCommRingCat
-    #check ((preservesSmallestColimits_of_preservesColimits AffineScheme.equivCommRingCat.inverse).1.1.1 this).some
+    ·
+      sorry
+    ·
+
+      simp only [Cocones.precompose, Functor.mapCocone, Cocones.functoriality]
+      simp only [Cofork.ofπ_pt, Cofork.ofπ_ι_app, Functor.const_obj_obj, parallelPair_obj_zero]
+
+
+      let : AffineScheme.equivCommRingCat.functor.mapCocone (Cofork.ofπ f pullback.condition) ≅ Cofork.ofπ (AffineScheme.equivCommRingCat.functor.map f) pullback.condition := by
+        sorry
+      simp only [Functor.mapCocone]
+      let := CommRingCat.Opposite.isColimitOfπPullbackOfFaithfullyFlat f.appTop.op <|
+        (flat_and_surjective_iff_of_faithfullyFlat_of_isAffine f).mp ⟨inferInstance, inferInstance⟩
+      #check AffineScheme.equivCommRingCat
+      #check ((preservesSmallestColimits_of_preservesColimits AffineScheme.equivCommRingCat.inverse).1.1.1 this).some
 
 
 -- noncomputable def CommRingCat.Opposite.isColimitOfπPullbackOfFaithfullyFlat (hf : f.unop.hom.FaithfullyFlat) :
@@ -105,11 +111,9 @@ noncomputable def AffineScheme.regularEpiOfFlatOfSurjective : RegularEpi f where
 --   let := regularEpiOfFaithfullyFlat f hf
 --   infer_instance
 
-
-
 end AffineScheme
 
-section SpecMorphismLifting
+section Spec
 
 /-
 In this section, we prove a lifting result for morphisms from `Spec` to schemes that is needed to
@@ -407,7 +411,7 @@ noncomputable def descSpec' : Spec R ⟶ U :=
         (exists_isAffineOpen_mem_and_subset
           (TopologicalSpace.Opens.mem_top (desc q))).choose_spec.right.left)
 
-end SpecMorphismLifting
+end Spec
 
 section DescSpec
 
