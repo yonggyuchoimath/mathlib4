@@ -66,6 +66,19 @@ noncomputable def AffineScheme.regularEpiOfFlatOfSurjective : RegularEpi f where
   right := pullback.snd f f
   w := pullback.condition
   isColimit := by
+    #check AffineScheme.equivCommRingCat
+    #check IsColimit.ofCoconeEquiv
+    apply isColimitOfReflects AffineScheme.equivCommRingCat.functor
+    have : parallelPair (AffineScheme.equivCommRingCat.functor.map (pullback.fst f f)) (AffineScheme.equivCommRingCat.functor.map (pullback.snd f f)) ≅ parallelPair (pullback.fst f f) (pullback.snd f f) ⋙ AffineScheme.equivCommRingCat.functor :=
+      parallelPair.ext (.refl _) (.refl _) (by cat_disch) (by cat_disch)
+
+    apply IsColimit.precomposeHomEquiv this _ ?_
+    simp [Cocones.precompose]
+
+
+    let : AffineScheme.equivCommRingCat.functor.mapCocone (Cofork.ofπ f pullback.condition) ≅ Cofork.ofπ (AffineScheme.equivCommRingCat.functor.map f) pullback.condition := by
+      sorry
+    simp only [Functor.mapCocone]
     let := CommRingCat.Opposite.isColimitOfπPullbackOfFaithfullyFlat f.appTop.op <|
       (flat_and_surjective_iff_of_faithfullyFlat_of_isAffine f).mp ⟨inferInstance, inferInstance⟩
     #check AffineScheme.equivCommRingCat
@@ -149,7 +162,7 @@ private lemma base_factorization_type {X Y : Scheme.{u}} {f : X ⟶ Y} [Surjecti
   refine ⟨_, types_comp _ _ ▸ Cofork.IsColimit.π_desc' this.isColimit _ ?_|>.symm⟩
   change pullback.fst _ _ ≫ Scheme.forget.map e = pullback.snd _ _ ≫ Scheme.forget.map e
   apply ((epi_iff_surjective _).mpr
-    (Scheme.Pullback.forget_comparison_surjective _ _)).left_cancellation
+    (Scheme.pullbackComparison_forget_surjective _ _)).left_cancellation
   simp only [← Category.assoc, pullbackComparison_comp_fst, ← Functor.map_comp, h,
     pullbackComparison_comp_snd]
 
@@ -227,8 +240,9 @@ private lemma appTopfaithfullyFlat (hp : desc p ∈ V) : (Γ.map (f' h hp).op).h
 maps is contained in the (set-theoretic) image of the bottom map. -/
 private lemma range_ιₛ_e_subset_ιᵤ (hp : desc p ∈ V) :
     Set.range ⇑(ιₛ h hp ≫ e).base.hom ⊆ Set.range ⇑(ιᵤ V).base.hom := by
-  nth_rw 1 [comp_base (ιₛ h hp) e, (base_factorization h).choose_spec.left.symm,
-    ← Category.assoc, ← comp_base, ιₛ, ← pullback.condition, comp_base, ← f', Category.assoc]
+  nth_rw 1 [Hom.comp_base (ιₛ h hp) e, (base_factorization h).choose_spec.left.symm,
+    ← Category.assoc, ← Hom.comp_base, ιₛ, ← pullback.condition, Hom.comp_base, ← f',
+    Category.assoc]
   have : Surjective (f' h hp) := by rw [f']; infer_instance
   simp only [TopCat.hom_comp, ContinuousMap.coe_comp, Surjective.surj.range_comp, Set.range_comp]
   change ⇑(base_factorization h).choose.hom ''
@@ -427,12 +441,12 @@ lemma descSpec_comp' : Spec.map f ≫ descSpec' h = e := by
 /-- The continuous map underlying `descSpec`. -/
 lemma descSpec_base : (descSpec h).base = (Flat.base_factorization h).choose :=
   (Flat.base_factorization h).choose_spec.right (descSpec h).base
-    ((comp_coeBase _ _).symm.trans (congrArg (fun f ↦ f.base) (descSpec_comp h)))
+    ((Hom.comp_base _ _).symm.trans (congrArg (fun f ↦ f.base) (descSpec_comp h)))
 
 /-- The continuous map underlying `descSpec`. -/
 lemma descSpec_base' : (descSpec' h).base = (Flat.base_factorization h).choose :=
   (Flat.base_factorization h).choose_spec.right (descSpec' h).base
-    ((comp_coeBase _ _).symm.trans (congrArg (fun f ↦ f.base) (descSpec_comp' h)))
+    ((Hom.comp_base _ _).symm.trans (congrArg (fun f ↦ f.base) (descSpec_comp' h)))
 
 /-- `descSpec` is the unique morphism `Spec R ⟶ U` through which `e` factors. -/
 lemma descSpec_unique (t : Spec R ⟶ U) (ht : Spec.map f ≫ t = e) : t = descSpec h := by
