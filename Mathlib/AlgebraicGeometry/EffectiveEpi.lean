@@ -45,7 +45,6 @@ open Scheme
 
 namespace Flat
 
-
 lemma flat_and_surjective_iff_of_faithfullyFlat_of_isAffine
     {X Y : Scheme.{u}} [IsAffine X] [IsAffine Y] (f : X ⟶ Y) :
     Flat f ∧ Surjective f ↔ f.appTop.hom.FaithfullyFlat := by
@@ -67,28 +66,18 @@ noncomputable def AffineScheme.regularEpiOfFlatOfSurjective : RegularEpi f where
   w := pullback.condition
   isColimit := by
     apply isColimitOfReflects AffineScheme.equivCommRingCat.functor
-    have : parallelPair (AffineScheme.equivCommRingCat.functor.map (pullback.fst f f)) (AffineScheme.equivCommRingCat.functor.map (pullback.snd f f)) ≅ parallelPair (pullback.fst f f) (pullback.snd f f) ⋙ AffineScheme.equivCommRingCat.functor :=
-      parallelPair.ext (.refl _) (.refl _) (by cat_disch) (by cat_disch)
-    apply IsColimit.precomposeHomEquiv this _ ?_
-    refine Cofork.IsColimit.mk _ ?_ ?_ ?_
-    · intro s
-      dsimp
-      sorry
-    ·
-      sorry
-    ·
+    apply (isColimitMapCoconeCoforkEquiv _ _).symm ?_
+    refine Cofork.isColimitOfIsos (Cofork.ofπ _ pullback.condition) ?_ _
+      (PreservesPullback.iso _ f f).symm (.refl _) (.refl _) (by simp) (by simp) (by simp)
+    apply CommRingCat.Opposite.isColimitOfπPullbackOfFaithfullyFlat _
+    simp only [AffineScheme.equivCommRingCat, CategoryTheory.Equivalence.symm_functor,
+      equivEssImageOfReflective_inverse, Functor.comp_map, ObjectProperty.ι_map, reflector,
+      Reflective.L, Functor.rightOp_map_unop, Γ_map_op]
+    exact (flat_and_surjective_iff_of_faithfullyFlat_of_isAffine f).mp ⟨‹_›, ‹_›⟩
 
-      simp only [Cocones.precompose, Functor.mapCocone, Cocones.functoriality]
-      simp only [Cofork.ofπ_pt, Cofork.ofπ_ι_app, Functor.const_obj_obj, parallelPair_obj_zero]
-
-
-      let : AffineScheme.equivCommRingCat.functor.mapCocone (Cofork.ofπ f pullback.condition) ≅ Cofork.ofπ (AffineScheme.equivCommRingCat.functor.map f) pullback.condition := by
-        sorry
-      simp only [Functor.mapCocone]
-      let := CommRingCat.Opposite.isColimitOfπPullbackOfFaithfullyFlat f.appTop.op <|
-        (flat_and_surjective_iff_of_faithfullyFlat_of_isAffine f).mp ⟨inferInstance, inferInstance⟩
-      #check AffineScheme.equivCommRingCat
-      #check ((preservesSmallestColimits_of_preservesColimits AffineScheme.equivCommRingCat.inverse).1.1.1 this).some
+noncomputable def AffineScheme.effectiveEpiOfFlatOfSurjective : EffectiveEpi f :=
+  let := AffineScheme.regularEpiOfFlatOfSurjective f
+  ⟨⟨effectiveEpiStructOfRegularEpi f⟩⟩
 
 
 -- noncomputable def CommRingCat.Opposite.isColimitOfπPullbackOfFaithfullyFlat (hf : f.unop.hom.FaithfullyFlat) :
