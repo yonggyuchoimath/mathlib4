@@ -152,6 +152,8 @@ define a unique morphism `descSpec : Spec R ⟶ U` of schemes such that `Spec.ma
 (so that `descSpec.base = desc`).
 -/
 
+/-**Step 1:**-/
+
 /-- A preparation lemma for `base_factorization`. -/
 private lemma base_factorization_type {X Y : Scheme.{u}} {f : X ⟶ Y} [Surjective f]
     {W : Scheme.{u}} {e : X ⟶ W} (h : pullback.fst f f ≫ e = pullback.snd f f ≫ e) :
@@ -202,6 +204,8 @@ variable {U : Scheme.{u}} {e : Spec S ⟶ U}
 
 /-- The unique continuous map satisfying `(Spec.map f).base ≫ desc = e.base`.-/
 local notation "desc" => Exists.choose (Flat.base_factorization h)
+
+/-**Step 2:**-/
 
 variable {p : Spec R}
 
@@ -382,6 +386,8 @@ instance Scheme.isAffine_local_affine {X : Scheme.{u}} (x : X) :
     Scheme.fullyFaithfulForgetToLocallyRingedSpace.preimageIso
       (X.local_affine x).choose_spec.choose_spec.some
   exact IsAffine.of_isIso f.hom
+
+/-**Step 3:**-/
 
 /-- The fpqc descent morphism `Spec R ⟶ U` of schemes obtained from a morphism `e : Spec S ⟶ U` of
 schemes which coequalizes the two projections of the self-pullback of `Spec S ⟶ Spec R`. -/
