@@ -55,6 +55,11 @@ noncomputable def _root_.CommRingCat.Opposite.isColimitOfπPullbackOfFaithfullyF
     IsColimit (Cofork.ofπ f pullback.condition) := by
   sorry
 
+noncomputable def _root_.CommRingCat.Equalizer.isLimitForkPushoutSelfOfFaithfullyFlat
+    {R S : CommRingCat.{u}} (f : R ⟶ S) (hf : f.hom.FaithfullyFlat) :
+    IsLimit (Fork.ofι f pushout.condition) := by
+  sorry
+
 section AffineScheme
 
 variable {X Y : AffineScheme.{u}} (f : X ⟶ Y) [Flat f] [Surjective f]
@@ -261,7 +266,14 @@ private noncomputable def Γdesc' (hp : desc p ∈ V) :
     Γ(Opens.toScheme V, ⊤) ⟶ Γ(((Spec R).basicOpen (r h hp)).toScheme, ⊤) := by
   apply Fork.IsLimit.lift (CommRingCat.Equalizer.isLimitForkPushoutSelfOfFaithfullyFlat
     (Γ.map (f' h hp).op) (appTopfaithfullyFlat h hp)) (Γ.map (e' h hp).op)
-  have : IsIso (pushoutComparison Γ (f' h hp).op (f' h hp).op) := by infer_instance
+  have : IsIso (pushoutComparison Γ (f' h hp).op (f' h hp).op) :=
+    have : ∀ (i : WalkingSpan), IsAffine ((span (f' h hp).op (f' h hp).op).obj i).unop := by
+      let (i : WalkingSpan) :
+          ((span (f' h hp).op (f' h hp).op).obj i).unop ≅ (cospan (f' h hp) (f' h hp)).obj i :=
+        ((spanOp (f' h hp) (f' h hp)).app i).unop.symm
+      rintro (_ | _ | _) <;> refine @IsAffine.of_isIso _ _ (this _).hom _ ?_ <;>
+        simp only [cospan_one, cospan_left, cospan_right] <;> infer_instance
+    inferInstance
   apply this.mono_of_iso.right_cancellation
   simp only [Category.assoc, inl_comp_pushoutComparison, ← Functor.map_comp,
     inr_comp_pushoutComparison]
@@ -290,9 +302,9 @@ private lemma desc'_comp (hp : desc p ∈ V) [IsAffine V] : f' h hp ≫ desc' h 
   apply ext_of_isAffine
   have : Γdesc' h hp ≫ (f' h hp).appTop = (e' h hp).appTop := Fork.IsLimit.lift_ι'
     (CommRingCat.Equalizer.isLimitForkPushoutSelfOfFaithfullyFlat _ (appTopfaithfullyFlat h hp)) _ _
-  rw [comp_appTop, ← this]
+  rw [Hom.comp_appTop, ← this]
   congr 1
-  simp only [desc', ← IsIso.Iso.inv_hom, comp_appTop, inv_appTop, Category.assoc]
+  simp only [desc', ← IsIso.Iso.inv_hom, Hom.comp_appTop, Hom.inv_appTop, Category.assoc]
   apply (Iso.inv_comp_eq (asIso _)).mpr
   simp only [isoSpec_hom, toSpecΓ_appTop, ΓSpecIso_naturality, asIso_hom]
 
