@@ -75,7 +75,7 @@ noncomputable def AffineScheme.regularEpiOfFlatOfSurjective : RegularEpi f where
       Reflective.L, Functor.rightOp_map_unop, Γ_map_op]
     exact (flat_and_surjective_iff_of_faithfullyFlat_of_isAffine f).mp ⟨‹_›, ‹_›⟩
 
-noncomputable def AffineScheme.effectiveEpiOfFlatOfSurjective : EffectiveEpi f :=
+lemma AffineScheme.effectiveEpiOfFlatOfSurjective : EffectiveEpi f :=
   let := AffineScheme.regularEpiOfFlatOfSurjective f
   ⟨⟨effectiveEpiStructOfRegularEpi f⟩⟩
 
