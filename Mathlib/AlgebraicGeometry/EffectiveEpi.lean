@@ -84,7 +84,6 @@ lemma AffineScheme.effectiveEpiOfFlatOfSurjective : EffectiveEpi f :=
   let := AffineScheme.regularEpiOfFlatOfSurjective f
   ⟨⟨effectiveEpiStructOfRegularEpi f⟩⟩
 
-
 -- noncomputable def CommRingCat.Opposite.isColimitOfπPullbackOfFaithfullyFlat (hf : f.unop.hom.FaithfullyFlat) :
 --     IsColimit (Cofork.ofπ f pullback.condition) :=
 --   Cofork.isColimitCoforkPushoutEquivIsColimitForkUnopPullback.symm
@@ -268,10 +267,9 @@ private noncomputable def Γdesc' (hp : desc p ∈ V) :
     (Γ.map (f' h hp).op) (appTopfaithfullyFlat h hp)) (Γ.map (e' h hp).op)
   have : IsIso (pushoutComparison Γ (f' h hp).op (f' h hp).op) :=
     have : ∀ (i : WalkingSpan), IsAffine ((span (f' h hp).op (f' h hp).op).obj i).unop := by
-      let (i : WalkingSpan) :
-          ((span (f' h hp).op (f' h hp).op).obj i).unop ≅ (cospan (f' h hp) (f' h hp)).obj i :=
+      let (i : WalkingSpan) : _ ≅ (cospan (f' h hp) (f' h hp)).obj i :=
         ((spanOp (f' h hp) (f' h hp)).app i).unop.symm
-      rintro (_ | _ | _) <;> refine @IsAffine.of_isIso _ _ (this _).hom _ ?_ <;>
+      rintro (_ | _ | _) <;> apply @IsAffine.of_isIso _ _ (this _).hom _ ?_ <;>
         simp only [cospan_one, cospan_left, cospan_right] <;> infer_instance
     inferInstance
   apply this.mono_of_iso.right_cancellation
