@@ -122,10 +122,10 @@ Given:
 
 We construct a morphism `descSpec : Spec R ⟶ U` of schemes through which `e` factors.
 
-**Step 1:** We define `desc : (Spec R).carrier ⟶ U.carrier` as the unique continuous map
+**Step 1:** We define `desc : (Spec R).carrier ⟶ U.carrier` to be the unique continuous map
 satisfying `(Spec.map f).base ≫ desc = e.base`.
 
-**Step 2:** For each point `p : (Spec R).carrier`, we construct the following commutative diagram:
+**Step 2:** For each point `p : (Spec R).carrier`, we construct the following diagram:
 ```
       P  --- ιₛ ---> Spec S
     / |                 |  \
@@ -137,6 +137,9 @@ e'    W  --- ιᵣ ---> Spec R   e
     ↘ ∨                 ∨  ↙
       V  ---- ιᵤ -----> U
 ```
+This diagram commutes in the following sense: Any triangle or square consisting solely of morphisms
+of schemes commutes as schemes. All other triangles and squares commute as topological spaces.
+
 Here, `V` denotes an affine open containing `desc p`, `W` denotes a basic open in `Spec R` mapping
 into `V`, and `P` denotes the pullback of `W` with `Spec S`. The morphisms in the diagram are:
 - `ιᵤ`, `ιᵣ`, `ιₛ` : the natural open immersions
@@ -144,9 +147,9 @@ into `V`, and `P` denotes the pullback of `W` with `Spec S`. The morphisms in th
 - `e'` : the restriction of `ιₛ ≫ e` to `V`
 - `desc'` : the unique morphism of schemes satisfying `f' ≫ desc' = e'`
 
-**Step 3:** We show that the morphisms `desc'` for each `p` obtained in Step 2 glue together to
+**Step 3:** We show that the morphisms `desc'` for each `p` obtained in **Step 2** glue together to
 define a unique morphism `descSpec : Spec R ⟶ U` of schemes such that `Spec.map f ≫ descSpec = e`
-(so `descSpec.base = desc`).
+(so that `descSpec.base = desc`).
 -/
 
 /-- A preparation lemma for `base_factorization`. -/
