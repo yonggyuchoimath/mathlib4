@@ -213,6 +213,14 @@ def Γ : AffineSchemeᵒᵖ ⥤ CommRingCat :=
 def equivCommRingCat : AffineScheme ≌ CommRingCatᵒᵖ :=
   equivEssImageOfReflective.symm
 
+lemma equivCommRingCat_functor_map {X Y : AffineScheme} (f : X ⟶ Y) :
+    equivCommRingCat.functor.map f = f.appTop.op := by
+  simp [equivCommRingCat, reflector, Reflective.L]
+
+lemma equivCommRingCat_inverse_map {X Y : CommRingCatᵒᵖ} (f : X ⟶ Y) :
+    equivCommRingCat.inverse.map f = Spec.map f.unop := by
+  simp [equivCommRingCat]
+
 instance : Γ.{u}.rightOp.IsEquivalence := equivCommRingCat.isEquivalence_functor
 
 instance : Γ.{u}.rightOp.op.IsEquivalence := equivCommRingCat.op.isEquivalence_functor

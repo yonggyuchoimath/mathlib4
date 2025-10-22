@@ -64,25 +64,19 @@ section AffineScheme
 
 variable {X Y : AffineScheme.{u}} (f : X ⟶ Y) [Flat f] [Surjective f]
 
-noncomputable def AffineScheme.regularEpiOfFlatOfSurjective : RegularEpi f where
-  W := pullback f f
-  left := pullback.fst f f
-  right := pullback.snd f f
-  w := pullback.condition
-  isColimit := by
-    apply isColimitOfReflects AffineScheme.equivCommRingCat.functor
-    apply (isColimitMapCoconeCoforkEquiv _ _).symm ?_
-    refine Cofork.isColimitOfIsos (Cofork.ofπ _ pullback.condition) ?_ _
-      (PreservesPullback.iso _ f f).symm (.refl _) (.refl _) (by simp) (by simp) (by simp)
-    apply CommRingCat.Opposite.isColimitOfπPullbackOfFaithfullyFlat _
-    simp only [AffineScheme.equivCommRingCat, CategoryTheory.Equivalence.symm_functor,
-      equivEssImageOfReflective_inverse, Functor.comp_map, ObjectProperty.ι_map, reflector,
-      Reflective.L, Functor.rightOp_map_unop, Γ_map_op]
-    exact (flat_and_surjective_iff_of_faithfullyFlat_of_isAffine f).mp ⟨‹_›, ‹_›⟩
+lemma AffineScheme.effectiveEpiOfFlatOfSurjective : EffectiveEpi f := by
+  apply effectiveEpiOfKernelPair f
+  apply isColimitOfReflects AffineScheme.equivCommRingCat.functor
+  apply (isColimitMapCoconeCoforkEquiv _ _).symm ?_
+  refine Cofork.isColimitOfIsos (Cofork.ofπ _ pullback.condition) ?_ _
+    (PreservesPullback.iso _ f f).symm (.refl _) (.refl _) (by simp) (by simp) (by simp)
+  apply CommRingCat.Opposite.isColimitOfπPullbackOfFaithfullyFlat _
+  simp only [AffineScheme.equivCommRingCat_functor_map]
+  exact (flat_and_surjective_iff_of_faithfullyFlat_of_isAffine f).mp ⟨‹_›, ‹_›⟩
 
-lemma AffineScheme.effectiveEpiOfFlatOfSurjective : EffectiveEpi f :=
-  let := AffineScheme.regularEpiOfFlatOfSurjective f
-  ⟨⟨effectiveEpiStructOfRegularEpi f⟩⟩
+-- noncomputable def AffineScheme.regularEpiOfFlatOfSurjective : RegularEpi f :=
+--   have := AffineScheme.effectiveEpiOfFlatOfSurjective f
+--   regularEpiOfEffectiveEpi f
 
 -- noncomputable def CommRingCat.Opposite.isColimitOfπPullbackOfFaithfullyFlat (hf : f.unop.hom.FaithfullyFlat) :
 --     IsColimit (Cofork.ofπ f pullback.condition) :=
@@ -302,6 +296,40 @@ private noncomputable def desc' (hp : desc p ∈ V) [hV : IsAffine V] :
     ((Spec R).basicOpen (r h hp)).toScheme ⟶ V.toScheme :=
   ((Spec R).basicOpen _).toScheme.isoSpec.hom ≫ Spec.map (Γdesc' h hp) ≫ V.toScheme.isoSpec.inv
 
+private lemma e'_coeq_pullback_f' (hp : desc p ∈ V) [hV : IsAffine V] :
+    pullback.fst (AffineScheme.ofHom (f' h hp)) (AffineScheme.ofHom (f' h hp)) ≫
+      AffineScheme.ofHom (e' h hp) =
+    pullback.snd (AffineScheme.ofHom (f' h hp)) (AffineScheme.ofHom (f' h hp)) ≫
+      AffineScheme.ofHom (e' h hp) := by
+  rw [ObjectProperty.FullSubcategory.comp_def, ObjectProperty.FullSubcategory.comp_def,
+    ← AffineScheme.forgetToScheme_map (pullback.fst (AffineScheme.ofHom (f' h hp)) _),
+    ← AffineScheme.forgetToScheme_map (pullback.snd (AffineScheme.ofHom (f' h hp)) _),
+    ← pullbackComparison_comp_fst, ← pullbackComparison_comp_snd,
+    Category.assoc, Category.assoc]
+  congr 1
+  simp only [AffineScheme.forgetToScheme_map, AffineScheme.ofHom]
+  apply (inferInstance : Mono (ιᵤ V)).right_cancellation
+  rw [e', Category.assoc, Category.assoc, IsOpenImmersion.lift_fac, ← Category.assoc,
+    ← Category.assoc, ← pullback.lift_fst _ _ (pullback_ιₛ_f h hp).symm]
+  nth_rw 1 [← pullback.lift_snd _ _ (pullback_ιₛ_f h hp).symm]
+  exact congrArg (_ ≫ ·) h.symm
+
+private noncomputable instance (hp : desc p ∈ V) : RegularEpi (AffineScheme.ofHom (f' h hp)) :=
+  have : Flat (AffineScheme.ofHom (f' h hp)) := by
+    simp only [f', AffineScheme.ofHom]
+    infer_instance
+  have : Surjective (AffineScheme.ofHom (f' h hp)) := by
+    simp only [f', AffineScheme.ofHom]
+    infer_instance
+  have := AffineScheme.effectiveEpiOfFlatOfSurjective (AffineScheme.ofHom (f' h hp))
+  regularEpiOfEffectiveEpi (AffineScheme.ofHom (f' h hp))
+
+/-- The left vertical map in the bottom square. -/
+private noncomputable def desc'A (hp : desc p ∈ V) [hV : IsAffine V] :
+    ((Spec R).basicOpen (r h hp)).toScheme ⟶ V.toScheme :=
+  (RegularEpi.desc' (AffineScheme.ofHom (f' h hp)) (AffineScheme.ofHom (e' h hp))
+    (e'_coeq_pullback_f' h hp)).val
+
 /-- Compatibility of left vertical maps: inner composition equals outer. -/
 private lemma desc'_comp (hp : desc p ∈ V) [IsAffine V] : f' h hp ≫ desc' h hp = e' h hp := by
   apply ext_of_isAffine
@@ -313,7 +341,12 @@ private lemma desc'_comp (hp : desc p ∈ V) [IsAffine V] : f' h hp ≫ desc' h 
   apply (Iso.inv_comp_eq (asIso _)).mpr
   simp only [isoSpec_hom, toSpecΓ_appTop, ΓSpecIso_naturality, asIso_hom]
 
-open IsPullback in
+/-- The left vertical map in the bottom square. -/
+private lemma desc'A_comp (hp : desc p ∈ V) [hV : IsAffine V] :
+    f' h hp ≫ desc'A h hp = e' h hp :=
+  (RegularEpi.desc' _ (AffineScheme.ofHom (e' h hp)) (e'_coeq_pullback_f' h hp)).property
+
+open CategoryTheory.IsPullback in
 /-- Two different expressions of the canonical map `P ×[Spec R] P_q ⟶ W ×[Spec R] W_q`, where
 `P_q` and `W_q` denote `P` and `W` applied to another point `q : Spec R` and a neighborhood `V'`. -/
 private lemma pullback_lift_paste_horiz
@@ -345,6 +378,31 @@ private lemma desc'_cocycle_condition (hp : desc p ∈ V) [hV : IsAffine V]
     simp only [ιᵣ, f', Flat.epi_of_flat_of_surjective]
   · simp only [← Category.assoc, pullback.lift_fst, pullback.lift_snd]
     simp only [Category.assoc, desc'_comp, e', IsOpenImmersion.lift_fac]
+    rw [← Category.assoc, ← Category.assoc, ← pullback.lift_fst (f := Spec.map f) (g := Spec.map f)
+      (pullback.fst (f' h hp ≫ ιᵣ h hp) (f' h hq ≫ ιᵣ h hq) ≫ ιₛ h hp)
+      (pullback.snd (f' h hp ≫ ιᵣ h hp) (f' h hq ≫ ιᵣ h hq) ≫ ιₛ h hq)
+      (by simp [ιₛ, f', ← pullback.condition])]
+    nth_rw 2 [← pullback.lift_snd (f := Spec.map f) (g := Spec.map f)
+      (pullback.fst (f' h hp ≫ ιᵣ h hp) (f' h hq ≫ ιᵣ h hq) ≫ ιₛ h hp)
+      (pullback.snd (f' h hp ≫ ιᵣ h hp) (f' h hq ≫ ιᵣ h hq) ≫ ιₛ h hq)
+      (by simp [ιₛ, f', ← pullback.condition])]
+    simp only [Category.assoc]
+    congr 1
+
+/-- The two pullback projections from `W ×[Spec R] W_q` become equal after composed with the scheme
+map to `U`, where `W_q` denotes `W` applied to another point `q : Spec R`. -/
+private lemma desc'A_cocycle_condition (hp : desc p ∈ V) [hV : IsAffine V]
+    {V' : U.Opens} {q : Spec R} (hq : desc q ∈ V') [hV' : IsAffine V'] :
+    pullback.fst (ιᵣ h hp) (ιᵣ h hq) ≫ desc'A h hp ≫ ιᵤ V =
+      pullback.snd (ιᵣ h hp) (ιᵣ h hq) ≫ desc'A h hq ≫ ιᵤ V' := by
+  apply (@cancel_epi _ _ _ _ _ (pullback.lift (f := ιᵣ h hp) (g := ιᵣ h hq)
+    (pullback.fst (f' h hp ≫ ιᵣ h hp) (f' h hq ≫ ιᵣ h hq) ≫ f' h hp)
+    (pullback.snd (f' h hp ≫ ιᵣ h hp) (f' h hq ≫ ιᵣ h hq) ≫ f' h hq)
+    (by simp [pullback.condition])) ?_).mp ?_
+  · rw [pullback_lift_paste_horiz h hp hq]
+    simp only [ιᵣ, f', Flat.epi_of_flat_of_surjective]
+  · simp only [← Category.assoc, pullback.lift_fst, pullback.lift_snd]
+    simp only [Category.assoc, desc'A_comp, e', IsOpenImmersion.lift_fac]
     rw [← Category.assoc, ← Category.assoc, ← pullback.lift_fst (f := Spec.map f) (g := Spec.map f)
       (pullback.fst (f' h hp ≫ ιᵣ h hp) (f' h hq ≫ ιᵣ h hq) ≫ ιₛ h hp)
       (pullback.snd (f' h hp ≫ ιᵣ h hp) (f' h hq ≫ ιᵣ h hq) ≫ ιₛ h hq)
@@ -401,6 +459,16 @@ noncomputable def descSpec : Spec R ⟶ U :=
 
 /-- The fpqc descent morphism `Spec R ⟶ U` of schemes obtained from a morphism `e : Spec S ⟶ U` of
 schemes which coequalizes the two projections of the self-pullback of `Spec S ⟶ Spec R`. -/
+noncomputable def descASpec : Spec R ⟶ U :=
+  (coverR h).glueMorphisms
+    (fun x ↦ desc'A h (U.local_affine (desc x)).choose.property ≫
+      ιᵤ (U.local_affine (desc x)).choose.obj)
+    (fun x y ↦ desc'A_cocycle_condition h
+      (U.local_affine ((base_factorization h).choose x)).choose.property
+      (U.local_affine ((base_factorization h).choose y)).choose.property)
+
+/-- The fpqc descent morphism `Spec R ⟶ U` of schemes obtained from a morphism `e : Spec S ⟶ U` of
+schemes which coequalizes the two projections of the self-pullback of `Spec S ⟶ Spec R`. -/
 noncomputable def descSpec' : Spec R ⟶ U :=
   (coverR' h).glueMorphisms
     (fun p ↦ desc' h (exists_isAffineOpen_mem_and_subset
@@ -438,6 +506,15 @@ lemma descSpec_comp : Spec.map f ≫ descSpec h = e := by
   exact congrArg (_ ≫ ·) (Cover.ι_glueMorphisms (coverR h) _ _ p)
 
 /-- `descSpec` composed with `Spec.map f` recovers the original morphism `e`. -/
+lemma descASpec_comp : Spec.map f ≫ descASpec h = e := by
+  apply Cover.hom_ext (Precoverage.ZeroHypercover.pullback₂ (Spec.map f) (coverR h))
+  intro p
+  simp only [Precoverage.ZeroHypercover.pullback₂, PreZeroHypercover.pullback₂]
+  change _ = ιₛ h (U.local_affine ((Flat.base_factorization h).choose p)).choose.property ≫ e
+  rw [← e'_ιᵤ_eq_ιₛ_e, ← desc'A_comp, ← Category.assoc, ← pullback.condition, Category.assoc]
+  exact congrArg (_ ≫ ·) (Cover.ι_glueMorphisms (coverR h) _ _ p)
+
+/-- `descSpec` composed with `Spec.map f` recovers the original morphism `e`. -/
 lemma descSpec_comp' : Spec.map f ≫ descSpec' h = e := by
   apply Cover.hom_ext (Precoverage.ZeroHypercover.pullback₂ (Spec.map f) (coverR' h))
   intro p
@@ -456,6 +533,11 @@ lemma descSpec_base : (descSpec h).base = (Flat.base_factorization h).choose :=
     ((Hom.comp_base _ _).symm.trans (congrArg (fun f ↦ f.base) (descSpec_comp h)))
 
 /-- The continuous map underlying `descSpec`. -/
+lemma descASpec_base : (descASpec h).base = (Flat.base_factorization h).choose :=
+  (Flat.base_factorization h).choose_spec.right (descASpec h).base
+    ((Hom.comp_base _ _).symm.trans (congrArg (fun f ↦ f.base) (descASpec_comp h)))
+
+/-- The continuous map underlying `descSpec`. -/
 lemma descSpec_base' : (descSpec' h).base = (Flat.base_factorization h).choose :=
   (Flat.base_factorization h).choose_spec.right (descSpec' h).base
     ((Hom.comp_base _ _).symm.trans (congrArg (fun f ↦ f.base) (descSpec_comp' h)))
@@ -469,6 +551,16 @@ lemma descSpec_unique (t : Spec R ⟶ U) (ht : Spec.map f ≫ t = e) : t = descS
   apply (cancel_epi (pullback.snd (Spec.map f) ((coverR h).f p))).mp
   rw [← Category.assoc, ← Category.assoc, ← pullback.condition, Category.assoc, Category.assoc,
     ht, descSpec_comp h]
+
+/-- `descSpec` is the unique morphism `Spec R ⟶ U` through which `e` factors. -/
+lemma descASpec_unique (t : Spec R ⟶ U) (ht : Spec.map f ≫ t = e) : t = descASpec h := by
+  apply Cover.hom_ext (coverR h)
+  intro p
+  have : Epi (pullback.snd (Spec.map f) ((coverR h).f p)) :=
+    Flat.epi_of_flat_of_surjective _
+  apply (cancel_epi (pullback.snd (Spec.map f) ((coverR h).f p))).mp
+  rw [← Category.assoc, ← Category.assoc, ← pullback.condition, Category.assoc, Category.assoc,
+    ht, descASpec_comp h]
 
 /-- `descSpec` is the unique morphism `Spec R ⟶ U` through which `e` factors. -/
 lemma descSpec_unique' (t : Spec R ⟶ U) (ht : Spec.map f ≫ t = e) : t = descSpec' h := by
