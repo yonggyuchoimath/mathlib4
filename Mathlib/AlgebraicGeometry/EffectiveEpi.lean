@@ -321,7 +321,7 @@ private lemma desc'_cocycle_condition (hp : desc p ∈ V) [hV : IsAffine V]
     congr 1
 
 /-- An open cover of `Spec R` by basic open subsets that maps to affine open subsets in `U` under
-`(base_factorization h).choose : (Spec R).carrier ⟶ U.carrier`. -/
+`desc : (Spec R).carrier ⟶ U.carrier`. -/
 private noncomputable def coverR : (Spec R).OpenCover := by
   apply Scheme.openCoverOfIsOpenCover (Spec R) <| fun p ↦ ((Spec R).basicOpen
     (exists_basicOpen_preimage_opens (U.local_affine (desc p)).choose.property).choose)
@@ -332,7 +332,7 @@ private noncomputable def coverR : (Spec R).OpenCover := by
     (exists_basicOpen_preimage_opens (U.local_affine (desc p)).choose.property).choose_spec.left⟩
 
 /-- An open cover of `Spec R` by basic open subsets that maps to affine open subsets in `U` under
-`(base_factorization h).choose : (Spec R).carrier ⟶ U.carrier`. -/
+`desc : (Spec R).carrier ⟶ U.carrier`. -/
 private noncomputable def coverR' : (Spec R).OpenCover := by
   apply Scheme.openCoverOfIsOpenCover (Spec R) <| fun p ↦ ((Spec R).basicOpen
     (r h (exists_isAffineOpen_mem_and_subset
