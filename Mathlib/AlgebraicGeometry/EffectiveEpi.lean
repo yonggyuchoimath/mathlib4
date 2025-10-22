@@ -16,24 +16,21 @@ We prove that are effective epimorphisms in the category of schemes.
 
 ## Main results
 
-* `AlgebraicGeometry.Flat.descSpec` : Given a flat ring map `f : R ⟶ S` with surjective
-  `Spec.map f : Spec S ⟶ Spec R` and a morphism `e : Spec S ⟶ U` of schemes which coequalizes
-  the two projections `(Spec S) ×[Spec R] (Spec S) ⟶ Spec S`, this constructs the unique morphism
-  `Spec R ⟶ U` of schemes through which `e` factors.
-
-* `AlgebraicGeometry.Flat.pullbackCoforkIsColimit` : The cofork formed by the two projections
-  `(Spec S) ×[Spec R] (Spec S) ⟶ Spec S` followed by `Spec S ⟶ Spec R` is a colimit when
-  `f : R ⟶ S` is a flat ring map with surjective `Spec.map f`.
-
-* `AlgebraicGeometry.Flat.effectiveEpi_of_flat_of_surjective` : Any surjective map
-  `Spec.map f : Spec S ⟶ Spec R` with flat `f : R ⟶ S` is an effective epimorphism
-  in the category of schemes.
+* `AlgebraicGeometry.Flat.descSpec`: Given a flat ring map `f : R ⟶ S` with surjective
+  `Spec.map f : Spec S ⟶ Spec R` and a morphism `e : Spec S ⟶ U` of schemes which
+  coequalizes the two projections `(Spec S) ×[Spec R] (Spec S) ⟶ Spec S`, this constructs
+  the unique morphism `Spec R ⟶ U` of schemes through which `e` factors.
+* `AlgebraicGeometry.Flat.effectiveEpi_Spec_of_flat_of_surjective`: Given a flat ring map
+  `f : R ⟶ S` with surjective `Spec.map f : Spec S ⟶ Spec R`, the map `Spec.map f` is an effective
+  epimorphism in the category of schemes, .
 
 ## Reference
 
 * https://stacks.math.columbia.edu/tag/023Q
 
 ## TODO
+
+* Generalize `effectiveEpi_Spec_of_flat_of_surjective` to quasi-compact coverings.
 * Generalize `base_factorization` to quasi-compact coverings.
 
 -/
@@ -66,7 +63,7 @@ lemma AffineScheme.effectiveEpiOfFlatOfSurjective : EffectiveEpi f := by
   apply effectiveEpiOfKernelPair f
   apply isColimitOfReflects AffineScheme.equivCommRingCat.functor
   apply (isColimitMapCoconeCoforkEquiv _ _).symm ?_
-  refine Cofork.isColimitOfIsos (Cofork.ofπ _ pullback.condition) ?_ _
+  apply Cofork.isColimitOfIsos (Cofork.ofπ _ pullback.condition) ?_ _
     (PreservesPullback.iso _ f f).symm (.refl _) (.refl _) (by simp) (by simp) (by simp)
   apply CommRingCat.Opposite.isColimitOfπPullbackOfFaithfullyFlat _
   simp only [AffineScheme.equivCommRingCat_functor_map]
@@ -253,13 +250,9 @@ private lemma e'_coeq_pullback_f' (hp : desc p ∈ V) [hV : IsAffine V] :
 
 /-- A regular epimorphism structure on `AffineScheme.ofHom (f' h hp)`. -/
 private noncomputable instance (hp : desc p ∈ V) : RegularEpi (AffineScheme.ofHom (f' h hp)) :=
-  have : Flat (AffineScheme.ofHom (f' h hp)) := by
-    simp only [f', AffineScheme.ofHom]
-    infer_instance
-  have : Surjective (AffineScheme.ofHom (f' h hp)) := by
-    simp only [f', AffineScheme.ofHom]
-    infer_instance
-  have := AffineScheme.effectiveEpiOfFlatOfSurjective (AffineScheme.ofHom (f' h hp))
+  have := @AffineScheme.effectiveEpiOfFlatOfSurjective _ _ (AffineScheme.ofHom (f' h hp))
+    (by simp only [f', AffineScheme.ofHom]; infer_instance)
+    (by simp only [f', AffineScheme.ofHom]; infer_instance)
   regularEpiOfEffectiveEpi (AffineScheme.ofHom (f' h hp))
 
 /-- The left vertical map in the bottom square. -/
@@ -302,7 +295,7 @@ private lemma desc'_cocycle_condition (hp : desc p ∈ V) [hV : IsAffine V]
     (pullback.snd (f' h hp ≫ ιᵣ h hp) (f' h hq ≫ ιᵣ h hq) ≫ f' h hq)
     (by simp [pullback.condition])) ?_).mp ?_
   · rw [pullback_lift_paste_horiz h hp hq]
-    simp only [ιᵣ, f', Flat.epi_of_flat_of_surjective]
+    simp only [ιᵣ, f', epi_of_flat_of_surjective]
   · simp only [← Category.assoc, pullback.lift_fst, pullback.lift_snd]
     simp only [Category.assoc, desc'_comp, e', IsOpenImmersion.lift_fac]
     rw [← Category.assoc, ← Category.assoc, ← pullback.lift_fst (f := Spec.map f) (g := Spec.map f)
@@ -326,18 +319,6 @@ private noncomputable def coverR : (Spec R).OpenCover := by
   apply TopologicalSpace.Opens.mem_iSup.mpr
   exact ⟨p,
     (exists_basicOpen_preimage_opens (U.local_affine (desc p)).choose.property).choose_spec.left⟩
-
-/-- An open cover of `Spec R` by basic open subsets that maps to affine open subsets in `U` under
-`desc : (Spec R).carrier ⟶ U.carrier`. -/
-private noncomputable def coverR' : (Spec R).OpenCover := by
-  apply Scheme.openCoverOfIsOpenCover (Spec R) <| fun p ↦ ((Spec R).basicOpen
-    (r h (exists_isAffineOpen_mem_and_subset
-      (TopologicalSpace.Opens.mem_top (desc p))).choose_spec.right.left))
-  apply TopologicalSpace.Opens.coe_eq_univ.mp (Set.eq_univ_iff_forall.mpr ?_)
-  intro p
-  apply TopologicalSpace.Opens.mem_iSup.mpr
-  exact ⟨p, (exists_basicOpen_preimage_opens (exists_isAffineOpen_mem_and_subset
-    (TopologicalSpace.Opens.mem_top (desc p))).choose_spec.right.left).choose_spec.left⟩
 
 instance Scheme.isAffine_local_affine {X : Scheme.{u}} (x : X) :
     IsAffine (Scheme.Opens.toScheme (X.local_affine x).choose.obj) := by
@@ -363,35 +344,6 @@ noncomputable def descSpec : Spec R ⟶ U :=
       (U.local_affine ((base_factorization h).choose x)).choose.property
       (U.local_affine ((base_factorization h).choose y)).choose.property)
 
-/-- The fpqc descent morphism `Spec R ⟶ U` of schemes obtained from a morphism `e : Spec S ⟶ U` of
-schemes which coequalizes the two projections of the self-pullback of `Spec S ⟶ Spec R`. -/
-noncomputable def descSpec' : Spec R ⟶ U :=
-  (coverR' h).glueMorphisms
-    (fun p ↦ desc' h (exists_isAffineOpen_mem_and_subset
-      (TopologicalSpace.Opens.mem_top (desc p))).choose_spec.right.left
-      (hV := (exists_isAffineOpen_mem_and_subset
-        (TopologicalSpace.Opens.mem_top (desc p))).choose_spec.left)
-      ≫ ιᵤ (exists_isAffineOpen_mem_and_subset (TopologicalSpace.Opens.mem_top (desc p))).choose)
-    (fun p q ↦ by
-      exact desc'_cocycle_condition h
-        (hV := (exists_isAffineOpen_mem_and_subset
-          (TopologicalSpace.Opens.mem_top (desc p))).choose_spec.left)
-        (hV' := (exists_isAffineOpen_mem_and_subset
-          (TopologicalSpace.Opens.mem_top (desc q))).choose_spec.left)
-        (exists_isAffineOpen_mem_and_subset
-          (TopologicalSpace.Opens.mem_top (desc p))).choose_spec.right.left
-        (exists_isAffineOpen_mem_and_subset
-          (TopologicalSpace.Opens.mem_top (desc q))).choose_spec.right.left)
-
-end Spec
-
-section DescSpec
-
-variable {R S : CommRingCat.{u}} {f : R ⟶ S}
-variable [Flat (Spec.map f)] [Surjective (Spec.map f)]
-variable {U : Scheme.{u}} {e : Spec S ⟶ U}
-  (h : pullback.fst (Spec.map f) (Spec.map f) ≫ e = pullback.snd (Spec.map f) (Spec.map f) ≫ e)
-
 /-- `descSpec` composed with `Spec.map f` recovers the original morphism `e`. -/
 lemma descSpec_comp : Spec.map f ≫ descSpec h = e := by
   apply Cover.hom_ext (Precoverage.ZeroHypercover.pullback₂ (Spec.map f) (coverR h))
@@ -401,81 +353,37 @@ lemma descSpec_comp : Spec.map f ≫ descSpec h = e := by
   rw [← e'_ιᵤ_eq_ιₛ_e, ← desc'_comp, ← Category.assoc, ← pullback.condition, Category.assoc]
   exact congrArg (_ ≫ ·) (Cover.ι_glueMorphisms (coverR h) _ _ p)
 
-/-- `descSpec` composed with `Spec.map f` recovers the original morphism `e`. -/
-lemma descSpec_comp' : Spec.map f ≫ descSpec' h = e := by
-  apply Cover.hom_ext (Precoverage.ZeroHypercover.pullback₂ (Spec.map f) (coverR' h))
-  intro p
-  change _ = ιₛ h (exists_isAffineOpen_mem_and_subset (TopologicalSpace.Opens.mem_top
-    ((base_factorization h).choose p))).choose_spec.right.left ≫ e
-  have : IsAffine _ := (exists_isAffineOpen_mem_and_subset (TopologicalSpace.Opens.mem_top
-    ((base_factorization h).choose p))).choose_spec.left
-  simp only [Precoverage.ZeroHypercover.pullback₂, PreZeroHypercover.pullback₂, ← e'_ιᵤ_eq_ιₛ_e]
-  rw [← desc'_comp, ← Category.assoc, ← pullback.condition]
-  rw [Category.assoc _ _ (descSpec' h)]
-  exact congrArg (_ ≫ ·) (Cover.ι_glueMorphisms (coverR' h) _ _ p)
-
 /-- `descSpec` is the unique morphism `Spec R ⟶ U` through which `e` factors. -/
 lemma descSpec_unique (t : Spec R ⟶ U) (ht : Spec.map f ≫ t = e) : t = descSpec h := by
   apply Cover.hom_ext (coverR h)
   intro p
-  have : Epi (pullback.snd (Spec.map f) ((coverR h).f p)) :=
-    Flat.epi_of_flat_of_surjective _
+  have : Epi (pullback.snd (Spec.map f) ((coverR h).f p)) := epi_of_flat_of_surjective _
   apply (cancel_epi (pullback.snd (Spec.map f) ((coverR h).f p))).mp
   rw [← Category.assoc, ← Category.assoc, ← pullback.condition, Category.assoc, Category.assoc,
     ht, descSpec_comp h]
 
-/-- `descSpec` is the unique morphism `Spec R ⟶ U` through which `e` factors. -/
-lemma descSpec_unique' (t : Spec R ⟶ U) (ht : Spec.map f ≫ t = e) : t = descSpec' h := by
-  apply Cover.hom_ext (coverR' h)
-  intro p
-  have : Epi (pullback.snd (Spec.map f) ((coverR' h).f p)) :=
-    Flat.epi_of_flat_of_surjective _
-  apply (cancel_epi (pullback.snd (Spec.map f) ((coverR' h).f p))).mp
-  rw [← Category.assoc, ← Category.assoc, ← pullback.condition, Category.assoc, Category.assoc,
-    ht, descSpec_comp' h]
+end Spec
 
-end DescSpec
+section Scheme
 
-section Spec
-
-variable {R S : CommRingCat.{u}} (f : R ⟶ S)
-variable (hf : f.hom.Flat) (hs : Surjective (Spec.map f))
-
-/-- The cofork formed by the two projections  `(Spec S) ×[Spec R] (Spec S) ⟶ Spec S` followed by
+/-- The cofork formed by the two projections `(Spec S) ×[Spec R] (Spec S) ⟶ Spec S` followed by
 `Spec S ⟶ Spec R` is a colimit when `f : R ⟶ S` is a flat ring map with surjective `Spec.map f`. -/
-noncomputable def pullbackCoforkIsColimit :
+noncomputable def isColimitCoforkSpecPullback {R S : CommRingCat.{u}} (f : R ⟶ S)
+    (hf : f.hom.Flat) (hs : Surjective (Spec.map f)) :
     IsColimit (Cofork.ofπ (Spec.map f) pullback.condition) := by
   apply Cofork.IsColimit.mk'
-  intro s
   have : Flat (Spec.map f) := HasRingHomProperty.Spec_iff.mpr hf
-  use Flat.descSpec s.condition
-  constructor
-  · simp only [Cofork.π_ofπ, Flat.descSpec_comp s.condition]
-  · intro t ht
-    exact Flat.descSpec_unique s.condition t ht
+  intro s
+  exact ⟨descSpec s.condition, ⟨by simp [descSpec_comp], fun ht ↦ descSpec_unique s.condition _ ht⟩⟩
 
-/-- A regular epimorphism structure on `Spec.map f` given by the projections of the self-pullback of
-`Spec.map f`, when `f : R ⟶ S` is a flat ring map with surjective `Spec.map f`. -/
-noncomputable def regularEpiOfFlatOfSurjective : RegularEpi (Spec.map f) where
-  W := pullback (Spec.map f) (Spec.map f)
-  left := pullback.fst (Spec.map f) (Spec.map f)
-  right := pullback.snd (Spec.map f) (Spec.map f)
-  w := pullback.condition
-  isColimit := pullbackCoforkIsColimit f hf hs
-
-/-- An effective epimorphism structure on `Spec.map f` when `f : R ⟶ S` is a flat ring map with
-surjective `Spec.map f`. -/
-noncomputable def effectiveEpiStructOfFlatOfSurjective : EffectiveEpiStruct (Spec.map f) :=
-  @effectiveEpiStructOfRegularEpi _ _ _ _ _ (regularEpiOfFlatOfSurjective f hf hs)
-
-/-- `Spec.map f` is an effective epimorphism in the category of schemes when `f : R ⟶ S` is a flat
-ring map with surjective `Spec.map f`. -/
+/-- `Spec.map f` is an effective epimorphism in the category of schemes, when `f : R ⟶ S` is a flat
+ring map with surjective `Spec.map f : Spec S ⟶ Spec R`. -/
 @[stacks 023Q]
-lemma effectiveEpi_of_flat_of_surjective (hf : f.hom.Flat) (hs : Surjective (Spec.map f)) :
-    EffectiveEpi (Spec.map f) :=
-  ⟨⟨effectiveEpiStructOfFlatOfSurjective f hf hs⟩⟩
+lemma effectiveEpi_Spec_of_flat_of_surjective {R S : CommRingCat.{u}} (f : R ⟶ S)
+    (hf : f.hom.Flat) (hs : Surjective (Spec.map f)) : EffectiveEpi (Spec.map f) :=
+  effectiveEpiOfKernelPair _ (isColimitCoforkSpecPullback f hf hs)
 
-end Spec
+end Scheme
 
 end Flat
 
