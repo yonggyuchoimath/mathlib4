@@ -81,48 +81,26 @@ In this section, we prove a lifting result for morphisms from `Spec` to schemes 
 establish that flat surjective morphisms between affine schemes are effective epimorphisms in the
 category of schemes.
 
-Given:
-1. A flat ring homomorphism `f : R ⟶ S` in `CommRingCat` such that the induced morphism of schemes
-  `Spec.map f : Spec S ⟶ Spec R` is surjective.
-2. An arbitrary scheme `U` equipped with a morphism `e : Spec S ⟶ U` of schemes which coequalizes
+Given
+1. a flat ring homomorphism `f : R ⟶ S` in `CommRingCat` such that the induced morphism of schemes
+  `Spec.map f : Spec S ⟶ Spec R` is surjective, and
+2. an arbitrary scheme `U` equipped with a morphism `e : Spec S ⟶ U` of schemes which coequalizes
   the two pullback projections of the self-pullback of `Spec.map f`, namely:
-  `pullback.fst (Spec.map f) (Spec.map f) ≫ e = pullback.snd (Spec.map f) (Spec.map f) ≫ e`.
-
-We construct a morphism `descSpec : Spec R ⟶ U` of schemes through which `e` factors.
-
-**Step 1:** We define `desc : (Spec R).carrier ⟶ U.carrier` to be the unique continuous map
-satisfying `(Spec.map f).base ≫ desc = e.base`.
-
-**Step 2:** For each point `p : (Spec R).carrier`, we construct the following diagram:
-```
-      P  --- ιₛ ---> Spec S
-    / |                 |  \
-   /  f'         Spec.map f \
-  /   ∨                 ∨    \
-e'    W  --- ιᵣ ---> Spec R   e
-  \   |                 |    /
-   \ desc'            desc  /
-    ↘ ∨                 ∨  ↙
-      V  ---- ιᵤ -----> U
-```
-This diagram commutes in the following sense: Any triangle or square consisting solely of morphisms
-of schemes commutes as schemes. All other triangles and squares commute as topological spaces.
-
-Here, `V` denotes an affine open containing `desc p`, `W` denotes a basic open in `Spec R` mapping
-into `V`, and `P` denotes the pullback of `W` with `Spec S`. The morphisms in the diagram are:
-- `ιᵤ`, `ιᵣ`, `ιₛ` : the natural open immersions
-- `f'` : the pullback projection to `W`
-- `e'` : the restriction of `ιₛ ≫ e` to `V`
-- `desc'` : the unique morphism of schemes satisfying `f' ≫ desc' = e'`
-
-**Step 3:** We show that the morphisms `desc'` for each `p` obtained in **Step 2** glue together to
-define a unique morphism `descSpec : Spec R ⟶ U` of schemes such that `Spec.map f ≫ descSpec = e`
-(so that `descSpec.base = desc`).
+  `pullback.fst (Spec.map f) (Spec.map f) ≫ e = pullback.snd (Spec.map f) (Spec.map f) ≫ e`
+we construct a morphism `descSpec : Spec R ⟶ U` of schemes through which `e` factors.
 -/
 
-/-**Step 1:**-/
+variable {R S : CommRingCat.{u}} {f : R ⟶ S}
+variable [Flat (Spec.map f)] [Surjective (Spec.map f)]
+variable {U : Scheme.{u}} {e : Spec S ⟶ U}
+  (h : pullback.fst (Spec.map f) (Spec.map f) ≫ e = pullback.snd (Spec.map f) (Spec.map f) ≫ e)
 
-/-- A preparation lemma for `base_factorization`. -/
+/-
+**Step 1:** We define `desc : (Spec R).carrier ⟶ U.carrier` to be the unique continuous map
+satisfying `(Spec.map f).base ≫ desc = e.base`.
+-/
+
+/-- A preparation lemma for `base_factorization` below. -/
 private lemma base_factorization_type {X Y : Scheme.{u}} {f : X ⟶ Y} [Surjective f]
     {W : Scheme.{u}} {e : X ⟶ W} (h : pullback.fst f f ≫ e = pullback.snd f f ≫ e) :
     ∃ (g : ↥Y → ↥W), ⇑e.base.hom = g ∘ ⇑f.base.hom := by
@@ -160,24 +138,33 @@ private lemma base_factorization {X Y : Scheme.{u}} {f : X ⟶ Y} [Flat f] [Surj
       fun g' hg' ↦ (TopCat.effectiveEpiStructOfQuotientMap _ (isQuotientMap_of_surjective f)).uniq _
         this g' hg'⟩⟩
 
-/-- A preparatory lemma, useful when defining `ιᵣ`, `ιₛ` and `f'`. -/
-private lemma exists_basicOpen_preimage_opens {X Y : Scheme.{u}} [IsAffine X]
-    {f : X.carrier ⟶ Y.carrier} {x : X} {V : Y.Opens} (hx : f x ∈ V.carrier) :
-    ∃ (r : Γ(X, ⊤)), x ∈ X.basicOpen r ∧ X.basicOpen r ≤ ⇑f ⁻¹' V.carrier :=
-  have := (TopologicalSpace.Opens.isBasis_iff_nbhd.mp
-    (isBasis_basicOpen X) (V.mem_comap.mpr hx)).choose_spec
-  ⟨this.left.choose,
-    ⟨this.left.choose_spec.symm ▸ this.right.left, this.left.choose_spec.symm ▸ this.right.right⟩⟩
-
-variable {R S : CommRingCat.{u}} {f : R ⟶ S}
-variable [Flat (Spec.map f)] [Surjective (Spec.map f)]
-variable {U : Scheme.{u}} {e : Spec S ⟶ U}
-  (h : pullback.fst (Spec.map f) (Spec.map f) ≫ e = pullback.snd (Spec.map f) (Spec.map f) ≫ e)
-
-/-- The unique continuous map satisfying `(Spec.map f).base ≫ desc = e.base`.-/
+/-- The unique continuous map `(Spec R).carrier ⟶ U.carrier` satisfying
+`(Spec.map f).base ≫ desc = e.base`.-/
 local notation "desc" => Exists.choose (base_factorization h)
 
-/-**Step 2:**-/
+/-
+**Step 2:** For each point `p : (Spec R).carrier`, we construct the following diagram:
+```
+      P  --- ιₛ ---> Spec S
+    / |                 |  \
+   /  f'         Spec.map f \
+  /   ∨                 ∨    \
+e'    W  --- ιᵣ ---> Spec R   e
+  \   |                 |    /
+   \ desc'            desc  /
+    ↘ ∨                 ∨  ↙
+      V  ---- ιᵤ -----> U
+```
+This diagram commutes in the following sense: Any triangle or square consisting solely of morphisms
+of schemes commutes as schemes. All other triangles and squares commute as topological spaces.
+
+Here, `V` denotes an affine open containing `desc p`, `W` denotes a basic open in `Spec R` mapping
+into `V`, and `P` denotes the pullback of `W` with `Spec S`. The morphisms in the diagram are:
+- `ιᵤ`, `ιᵣ`, `ιₛ` : the natural open immersions
+- `f'` : the pullback projection to `W`
+- `e'` : the restriction of `ιₛ ≫ e` to `V`
+- `desc'` : the unique morphism of schemes satisfying `f' ≫ desc' = e'`
+-/
 
 variable {p : Spec R}
 
@@ -188,6 +175,15 @@ private instance (V : U.Opens) : IsOpenImmersion (ιᵤ V) := by
   infer_instance
 
 variable {V : U.Opens}
+
+/-- A preparatory lemma, useful when defining `ιᵣ`, `ιₛ` and `f'`. -/
+private lemma exists_basicOpen_preimage_opens {X Y : Scheme.{u}} [IsAffine X]
+    {f : X.carrier ⟶ Y.carrier} {x : X} {V : Y.Opens} (hx : f x ∈ V.carrier) :
+    ∃ (r : Γ(X, ⊤)), x ∈ X.basicOpen r ∧ X.basicOpen r ≤ ⇑f ⁻¹' V.carrier :=
+  have := (TopologicalSpace.Opens.isBasis_iff_nbhd.mp
+    (isBasis_basicOpen X) (V.mem_comap.mpr hx)).choose_spec
+  ⟨this.left.choose,
+    ⟨this.left.choose_spec.symm ▸ this.right.left, this.left.choose_spec.symm ▸ this.right.right⟩⟩
 
 /-- An element in `Γ(Spec R, ⊤) (≅ R)` defining the basic open subset `W` in `Spec R`. -/
 private noncomputable def r (hp : desc p ∈ V) :
@@ -351,7 +347,11 @@ instance Scheme.isAffine_local_affine {X : Scheme.{u}} (x : X) :
       (X.local_affine x).choose_spec.choose_spec.some
   exact IsAffine.of_isIso f.hom
 
-/-**Step 3:**-/
+/-
+**Step 3:** We show that the morphisms `desc'` for each `p` obtained in **Step 2** glue together to
+define a unique morphism `descSpec : Spec R ⟶ U` of schemes such that `Spec.map f ≫ descSpec = e`
+(so that `descSpec.base = desc`).
+-/
 
 /-- The fpqc descent morphism `Spec R ⟶ U` of schemes obtained from a morphism `e : Spec S ⟶ U` of
 schemes which coequalizes the two projections of the self-pullback of `Spec S ⟶ Spec R`. -/
