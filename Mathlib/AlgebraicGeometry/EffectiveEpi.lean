@@ -138,7 +138,7 @@ private lemma base_factorization {X Y : Scheme.{u}} {f : X ⟶ Y} [Flat f] [Surj
       fun g' hg' ↦ (TopCat.effectiveEpiStructOfQuotientMap _ (isQuotientMap_of_surjective f)).uniq _
         this g' hg'⟩⟩
 
-/-- The unique continuous map `(Spec R).carrier ⟶ U.carrier` satisfying
+/-- The unique continuous map `(Spec R).carrier ⟶ U.carrier` such that
 `(Spec.map f).base ≫ desc = e.base`.-/
 local notation "desc" => Exists.choose (base_factorization h)
 
@@ -176,7 +176,7 @@ private instance (V : U.Opens) : IsOpenImmersion (ιᵤ V) := by
 
 variable {V : U.Opens}
 
-/-- A preparatory lemma, useful when defining `ιᵣ`, `ιₛ` and `f'`. -/
+/-- A preparatory lemma, useful when dealing with `ιᵣ`, `ιₛ` and `f'`. -/
 private lemma exists_basicOpen_preimage_opens {X Y : Scheme.{u}} [IsAffine X]
     {f : X.carrier ⟶ Y.carrier} {x : X} {V : Y.Opens} (hx : f x ∈ V.carrier) :
     ∃ (r : Γ(X, ⊤)), x ∈ X.basicOpen r ∧ X.basicOpen r ≤ ⇑f ⁻¹' V.carrier :=
@@ -214,7 +214,7 @@ private lemma range_ιₛ_e_subset_ιᵤ (hp : desc p ∈ V) :
   change ⇑(base_factorization h).choose.hom ''
     ((Spec R).basicOpen (r h hp)).ι.opensRange.carrier ⊆ (Opens.ι V).opensRange.carrier
   simp only [Opens.opensRange_ι]
-  refine Set.image_subset_iff.mpr (exists_basicOpen_preimage_opens hp).choose_spec.right
+  exact Set.image_subset_iff.mpr (exists_basicOpen_preimage_opens hp).choose_spec.right
 
 /-- The left vertical map in the outer square of the diagram. -/
 private noncomputable def e' (hp : desc p ∈ V) :
