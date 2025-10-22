@@ -31,7 +31,6 @@ We prove that are effective epimorphisms in the category of schemes.
 ## TODO
 
 * Generalize `effectiveEpi_Spec_of_flat_of_surjective` to quasi-compact coverings.
-* Generalize `base_factorization` to quasi-compact coverings.
 
 -/
 
@@ -92,9 +91,9 @@ variable [Flat (Spec.map f)] [Surjective (Spec.map f)]
 variable {U : Scheme.{u}} {e : Spec S ⟶ U}
   (h : pullback.fst (Spec.map f) (Spec.map f) ≫ e = pullback.snd (Spec.map f) (Spec.map f) ≫ e)
 
-/-
-**Step 1:** We define `desc : (Spec R).carrier ⟶ U.carrier` to be the unique continuous map
-satisfying `(Spec.map f).base ≫ desc = e.base`.
+/- **Step 1:**
+We define `desc : (Spec R).carrier ⟶ U.carrier` to be the unique continuous map satisfying
+`(Spec.map f).base ≫ desc = e.base`.
 -/
 
 /-- A preparation lemma for `base_factorization` below. -/
@@ -111,13 +110,13 @@ private lemma base_factorization_type {X Y : Scheme.{u}} {f : X ⟶ Y} [Surjecti
   simp only [← Category.assoc, pullbackComparison_comp_fst, ← Functor.map_comp, h,
     pullbackComparison_comp_snd]
 
+/- Implementation note: `base_factorization` can be generalized to a (non-private) lemma for
+quasi-compact coverings (rather than just quasi-compact maps) that are flat and surjective. It would
+be useful in describing the underlying continuous map of a more general version of `descSpec`. -/
+
 /-- For a flat surjective and quasi-compact morphism `f : X ⟶ Y` of schemes,
 any morphism `e : X ⟶ W` of schemes satisfying `pullback.fst f f ≫ e = pullback.snd f f ≫ e`
-factors through a unique *continuous map* on underlying topological spaces.
-
-Implementation note: This lemma should be generalized to a (non-private) lemma for quasi-compact
-coverings (rather than just quasi-compact maps) that are flat and surjective. That version would be
-useful in describing the underliying continuous map of `descSpec : Spec R ⟶ U`. -/
+factors through a unique *continuous map* on underlying topological spaces. -/
 private lemma base_factorization {X Y : Scheme.{u}} {f : X ⟶ Y} [Flat f] [Surjective f]
     [QuasiCompact f] {W : Scheme.{u}} {e : X ⟶ W}
     (h : pullback.fst f f ≫ e = pullback.snd f f ≫ e) :
@@ -139,8 +138,8 @@ private lemma base_factorization {X Y : Scheme.{u}} {f : X ⟶ Y} [Flat f] [Surj
 `(Spec.map f).base ≫ desc = e.base`.-/
 local notation "desc" => Exists.choose (base_factorization h)
 
-/-
-**Step 2:** For each point `p : (Spec R).carrier`, we construct the following diagram:
+/- **Step 2:**
+For each point `p : (Spec R).carrier`, we construct a diagram
 ```
       P  --- ιₛ ---> Spec S
     / |                 |  \
@@ -152,8 +151,8 @@ e'    W  --- ιᵣ ---> Spec R   e
     ↘ ∨                 ∨  ↙
       V  ---- ιᵤ -----> U
 ```
-This diagram commutes in the following sense: Any triangle or square consisting solely of morphisms
-of schemes commutes as schemes. All other triangles and squares commute as topological spaces.
+This diagram commutes in the following sense: Any triangle or square involving `desc` commutes as
+topological spaces. All other triangles and squares commute as schemes.
 
 Here, `V` denotes an affine open containing `desc p`, `W` denotes a basic open in `Spec R` mapping
 into `V`, and `P` denotes the pullback of `W` with `Spec S`. The morphisms in the diagram are:
@@ -163,15 +162,15 @@ into `V`, and `P` denotes the pullback of `W` with `Spec S`. The morphisms in th
 - `desc'` : the unique morphism of schemes satisfying `f' ≫ desc' = e'`
 -/
 
-variable {p : Spec R}
+variable {p : Spec R} (V : U.Opens)
 
-private noncomputable def ιᵤ (V : U.Opens) : V.toScheme ⟶ U := Scheme.Opens.ι V
+private noncomputable def ιᵤ : V.toScheme ⟶ U := Scheme.Opens.ι V
 
-private instance (V : U.Opens) : IsOpenImmersion (ιᵤ V) := by
+private instance : IsOpenImmersion (ιᵤ V) := by
   rw [ιᵤ]
   infer_instance
 
-variable {V : U.Opens}
+variable {V}
 
 /-- A preparatory lemma, useful when dealing with `ιᵣ`, `ιₛ` and `f'`. -/
 private lemma exists_basicOpen_preimage_opens {X Y : Scheme.{u}} [IsAffine X]
@@ -192,7 +191,7 @@ private noncomputable def ιᵣ (hp : desc p ∈ V) :
   (Scheme.basicOpen (Spec R) (r h hp)).ι
 
 private noncomputable def f' (hp : desc p ∈ V) :
-    pullback (ιᵣ h hp) (Spec.map f) ⟶ ↑((Spec R).basicOpen (r h hp)) :=
+    pullback (ιᵣ h hp) (Spec.map f) ⟶ ((Spec R).basicOpen (r h hp)).toScheme :=
   pullback.fst (ιᵣ h hp) (Spec.map f)
 
 private noncomputable def ιₛ (hp : desc p ∈ V) :
@@ -208,8 +207,7 @@ private lemma range_ιₛ_e_subset_ιᵤ (hp : desc p ∈ V) :
     Category.assoc]
   have : Surjective (f' h hp) := by rw [f']; infer_instance
   simp only [TopCat.hom_comp, ContinuousMap.coe_comp, Surjective.surj.range_comp, Set.range_comp]
-  change ⇑(base_factorization h).choose.hom ''
-    ((Spec R).basicOpen (r h hp)).ι.opensRange.carrier ⊆ (Opens.ι V).opensRange.carrier
+  change _ '' ((Spec R).basicOpen (r h hp)).ι.opensRange.carrier ⊆ (Opens.ι V).opensRange.carrier
   simp only [Opens.opensRange_ι]
   exact Set.image_subset_iff.mpr (exists_basicOpen_preimage_opens hp).choose_spec.right
 
@@ -266,6 +264,23 @@ private lemma desc'_comp (hp : desc p ∈ V) [hV : IsAffine V] :
     f' h hp ≫ desc' h hp = e' h hp :=
   (RegularEpi.desc' _ (AffineScheme.ofHom (e' h hp)) (e'_coeq_pullback_f' h hp)).property
 
+/- **Step 3:**
+We show that the morphisms `desc'` of schemes obtained in **Step 2** for each `p : (Spec R).carrier`
+glue together to define a unique morphism `descSpec : Spec R ⟶ U` of schemes satisfying
+`Spec.map f ≫ descSpec = e`.
+-/
+
+/-- An open cover of `Spec R` by basic open subsets that maps to affine open subsets in `U` under
+`desc : (Spec R).carrier ⟶ U.carrier`. -/
+private noncomputable def coverR : (Spec R).OpenCover := by
+  apply Scheme.openCoverOfIsOpenCover (Spec R) <| fun p ↦ ((Spec R).basicOpen
+    (exists_basicOpen_preimage_opens (U.local_affine (desc p)).choose.property).choose)
+  apply TopologicalSpace.Opens.coe_eq_univ.mp (Set.eq_univ_iff_forall.mpr ?_)
+  intro p
+  apply TopologicalSpace.Opens.mem_iSup.mpr
+  exact ⟨p,
+    (exists_basicOpen_preimage_opens (U.local_affine (desc p)).choose.property).choose_spec.left⟩
+
 open CategoryTheory.IsPullback in
 /-- Two different expressions of the canonical map `P ×[Spec R] P_q ⟶ W ×[Spec R] W_q`, where
 `P_q` and `W_q` denote `P` and `W` applied to another point `q : Spec R` and a neighborhood `V'`. -/
@@ -278,11 +293,10 @@ private lemma pullback_lift_paste_horiz
     (paste_horiz (of_hasPullback _ _)
       (paste_vert (of_hasPullback _ _) (of_hasPullback _ _))).isoPullback.inv ≫
     pullback.fst (pullback.snd _ _ ≫ pullback.snd _ _) _ ≫ pullback.snd _ _ := by
-  apply (@cancel_mono _ _ _ _ _ (pullback.fst (ιᵣ h hp) (ιᵣ h hq)) ?_).mp ?_
-  · simp only [ιᵣ]
-    infer_instance
-  · simp only [pullback.lift_fst, Category.assoc, ← pullback.condition]
-    rw [← Category.assoc (pullback.fst _ _) _ _, ← Category.assoc, isoPullback_inv_fst]
+  apply (@cancel_mono _ _ _ _ _ (pullback.fst (ιᵣ h hp) (ιᵣ h hq))
+    (by simp only [ιᵣ]; infer_instance)).mp
+  simp only [pullback.lift_fst, Category.assoc, ← pullback.condition]
+  rw [← Category.assoc (pullback.fst _ _) _ _, ← Category.assoc, isoPullback_inv_fst]
 
 /-- The two pullback projections from `W ×[Spec R] W_q` become equal after composed with the scheme
 map to `U`, where `W_q` denotes `W` applied to another point `q : Spec R`. -/
@@ -308,31 +322,6 @@ private lemma desc'_cocycle_condition (hp : desc p ∈ V) [hV : IsAffine V]
       (by simp [ιₛ, f', ← pullback.condition])]
     simp only [Category.assoc]
     congr 1
-
-/-- An open cover of `Spec R` by basic open subsets that maps to affine open subsets in `U` under
-`desc : (Spec R).carrier ⟶ U.carrier`. -/
-private noncomputable def coverR : (Spec R).OpenCover := by
-  apply Scheme.openCoverOfIsOpenCover (Spec R) <| fun p ↦ ((Spec R).basicOpen
-    (exists_basicOpen_preimage_opens (U.local_affine (desc p)).choose.property).choose)
-  apply TopologicalSpace.Opens.coe_eq_univ.mp (Set.eq_univ_iff_forall.mpr ?_)
-  intro p
-  apply TopologicalSpace.Opens.mem_iSup.mpr
-  exact ⟨p,
-    (exists_basicOpen_preimage_opens (U.local_affine (desc p)).choose.property).choose_spec.left⟩
-
-instance Scheme.isAffine_local_affine {X : Scheme.{u}} (x : X) :
-    IsAffine (Scheme.Opens.toScheme (X.local_affine x).choose.obj) := by
-  let f : Scheme.Opens.toScheme (X.local_affine x).choose.obj ≅
-      AlgebraicGeometry.Spec (X.local_affine x).choose_spec.choose :=
-    Scheme.fullyFaithfulForgetToLocallyRingedSpace.preimageIso
-      (X.local_affine x).choose_spec.choose_spec.some
-  exact IsAffine.of_isIso f.hom
-
-/-
-**Step 3:** We show that the morphisms `desc'` for each `p` obtained in **Step 2** glue together to
-define a unique morphism `descSpec : Spec R ⟶ U` of schemes such that `Spec.map f ≫ descSpec = e`
-(so that `descSpec.base = desc`).
--/
 
 /-- The fpqc descent morphism `Spec R ⟶ U` of schemes obtained from a morphism `e : Spec S ⟶ U` of
 schemes which coequalizes the two projections of the self-pullback of `Spec S ⟶ Spec R`. -/
@@ -367,7 +356,7 @@ end Spec
 section Scheme
 
 /-- The cofork formed by the two projections `(Spec S) ×[Spec R] (Spec S) ⟶ Spec S` followed by
-`Spec S ⟶ Spec R` is a colimit when `f : R ⟶ S` is a flat ring map with surjective `Spec.map f`. -/
+`Spec S ⟶ Spec R` is a colimit, when `f : R ⟶ S` is a flat ring map with surjective `Spec.map f`. -/
 noncomputable def isColimitCoforkSpecPullback {R S : CommRingCat.{u}} (f : R ⟶ S)
     (hf : f.hom.Flat) (hs : Surjective (Spec.map f)) :
     IsColimit (Cofork.ofπ (Spec.map f) pullback.condition) := by
